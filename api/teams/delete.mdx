@@ -6,8 +6,12 @@ description: Delete a Formula 1 team (admin only)
 ## Endpoint
 
 ```
-DELETE /api/teams/delete
+POST /api/teams/delete
 ```
+
+<Note>
+Despite being a POST request, this endpoint performs a delete operation. It's configured this way in the Nitro.js handler.
+</Note>
 
 Deletes a Formula 1 team from the database. This endpoint requires admin authentication via JWT token.
 
@@ -114,7 +118,7 @@ Returns an object containing the status and the deleted team data.
 
 <CodeGroup>
 ```bash cURL
-curl -X DELETE https://your-domain.com/api/teams/delete \
+curl -X POST https://your-domain.com/api/teams/delete \
   -H "Content-Type: application/json" \
   -d '{
     "teamId": "haas",
@@ -124,7 +128,7 @@ curl -X DELETE https://your-domain.com/api/teams/delete \
 
 ```javascript JavaScript
 const response = await fetch('https://your-domain.com/api/teams/delete', {
-  method: 'DELETE',
+  method: 'POST',
   headers: {
     'Content-Type': 'application/json'
   },

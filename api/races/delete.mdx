@@ -6,14 +6,14 @@ description: Delete a race record from the database
 ## Endpoint
 
 ```
-DELETE /api/races/delete
+POST /api/races/delete
 ```
 
-Delete a race record from the F1 PitLane Predict database. This endpoint requires admin authentication via JWT token.
-
 <Note>
-Despite the DELETE method in documentation, this endpoint is implemented as POST in the source code.
+Despite being a POST request, this endpoint performs a delete operation. It's configured this way in the Nitro.js handler.
 </Note>
+
+Delete a race record from the F1 PitLane Predict database. This endpoint requires admin authentication via JWT token.
 
 ## Authentication
 

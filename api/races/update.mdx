@@ -6,14 +6,14 @@ description: Update an existing race record in the database
 ## Endpoint
 
 ```
-PUT /api/races/update
+POST /api/races/update
 ```
 
-Update an existing race record in the F1 PitLane Predict database. This endpoint requires admin authentication via JWT token.
-
 <Note>
-Despite the PUT method in documentation, this endpoint is implemented as POST in the source code.
+Despite being a POST request, this endpoint performs an update operation. It's configured this way in the Nitro.js handler.
 </Note>
+
+Update an existing race record in the F1 PitLane Predict database. This endpoint requires admin authentication via JWT token.
 
 ## Authentication
 
