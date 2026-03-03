@@ -1,0 +1,512 @@
+---
+title: Troubleshooting
+description: Solutions to common issues when developing F1 PitLane Predict
+---
+
+## Installation issues
+
+### npm install fails
+
+<Accordion title="Error: EACCES permission denied">
+  **Problem:** npm tries to install packages globally without proper permissions.
+
+  **Solution:**
+  
+  1. Never use `sudo` with npm - it can cause security issues
+  2. Configure npm to use a different directory:
+     ```bash
+     mkdir ~/.npm-global
+     npm config set prefix '~/.npm-global'
+     echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
+     source ~/.profile
+     ```
+  3. Retry the installation:
+     ```bash
+     npm install
+     ```
+</Accordion>
+
+<Accordion title="Error: ERESOLVE unable to resolve dependency tree">
+  **Problem:** npm cannot resolve package version conflicts.
+
+  **Solution:**
+  
+  Try these steps in order:
+  
+  1. Clear npm cache:
+     ```bash
+     npm cache clean --force
+     ```
+  
+  2. Delete `node_modules` and `package-lock.json`:
+     ```bash
+     rm -rf node_modules package-lock.json
+     npm install
+     ```
+  
+  3. If still failing, use the legacy peer deps flag:
+     ```bash
+     npm install --legacy-peer-deps
+     ```
+</Accordion>
+
+<Accordion title="Wrong Node.js version">
+  **Problem:** The project requires Node.js 20 or higher.
+
+  **Solution:**
+  
+  1. Check your current version:
+     ```bash
+     node --version
+     ```
+  
+  2. If below v20, install the latest LTS version:
+     - Using [nvm](https://github.com/nvm-sh/nvm):
+       ```bash
+       nvm install 20
+       nvm use 20
+       ```
+     - Or download from [nodejs.org](https://nodejs.org/)
+  
+  3. Verify the installation:
+     ```bash
+     node --version  # Should show v20.x.x or higher
+     ```
+</Accordion>
+
+## Development server issues
+
+### Frontend server won't start
+
+<Accordion title="Error: Port 5173 is already in use">
+  **Problem:** Another process is using port 5173.
+
+  **Solution:**
+  
+  1. Find the process using port 5173:
+     ```bash
+     # On macOS/Linux:
+     lsof -ti:5173
+     
+     # On Windows:
+     netstat -ano | findstr :5173
+     ```
+  
+  2. Kill the process:
+     ```bash
+     # On macOS/Linux:
+     kill -9 $(lsof -ti:5173)
+     
+     # On Windows (replace PID with actual process ID):
+     taskkill /PID <PID> /F
+     ```
+  
+  3. Or use a different port in `vite.config.ts`:
+     ```typescript
+     export default defineConfig({
+       server: {
+         port: 3000  // Use different port
+       }
+     })
+     ```
+</Accordion>
+
+<Accordion title="Error: Cannot find module '@vitejs/plugin-vue'">
+  **Problem:** Dependencies are not installed or corrupted.
+
+  **Solution:**
+  
+  1. Ensure you're in the correct directory (project root, not `server/`)
+  2. Reinstall dependencies:
+     ```bash
+     rm -rf node_modules package-lock.json
+     npm install
+     ```
+  3. Verify the plugin is in `package.json` devDependencies
+</Accordion>
+
+### Backend server won't start
+
+<Accordion title="Error: Cannot find module 'nitropack'">
+  **Problem:** Backend dependencies are not installed.
+
+  **Solution:**
+  
+  1. Navigate to the server directory:
+     ```bash
+     cd server
+     ```
+  
+  2. Install dependencies:
+     ```bash
+     npm install
+     ```
+  
+  3. Start the server:
+     ```bash
+     npm run dev
+     ```
+</Accordion>
+
+<Accordion title="Backend starts but API returns errors">
+  **Problem:** Database connection or Prisma client issues.
+
+  **Solution:**
+  
+  1. Verify your `DATABASE_URL` environment variable is set
+  2. Ensure PostgreSQL is running
+  3. Regenerate Prisma client:
+     ```bash
+     npx prisma generate
+     ```
+  4. Check database connection:
+     ```bash
+     npx prisma db pull  # Should succeed if connection works
+     ```
+</Accordion>
+
+## Database issues
+
+### Prisma connection errors
+
+<Accordion title="Error: Can't reach database server">
+  **Problem:** PostgreSQL is not running or connection details are incorrect.
+
+  **Solution:**
+  
+  1. Check if PostgreSQL is running:
+     ```bash
+     # On macOS:
+     brew services list | grep postgresql
+     
+     # On Linux:
+     sudo systemctl status postgresql
+     
+     # On Windows:
+     # Check Services app for PostgreSQL service
+     ```
+  
+  2. Start PostgreSQL if needed:
+     ```bash
+     # On macOS:
+     brew services start postgresql
+     
+     # On Linux:
+     sudo systemctl start postgresql
+     ```
+  
+  3. Verify your `DATABASE_URL` in `.env`:
+     ```
+     DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/DATABASE_NAME"
+     ```
+  
+  4. Test the connection:
+     ```bash
+     psql -h localhost -U your_username -d f1_pitlane
+     ```
+</Accordion>
+
+<Accordion title="Error: database does not exist">
+  **Problem:** The database hasn't been created yet.
+
+  **Solution:**
+  
+  1. Connect to PostgreSQL:
+     ```bash
+     psql -U postgres
+     ```
+  
+  2. Create the database:
+     ```sql
+     CREATE DATABASE f1_pitlane;
+     ```
+  
+  3. Exit psql:
+     ```sql
+     \q
+     ```
+  
+  4. Run Prisma migrations:
+     ```bash
+     npx prisma migrate dev
+     ```
+</Accordion>
+
+<Accordion title="Error: Prisma schema not found">
+  **Problem:** Running Prisma commands from the wrong directory.
+
+  **Solution:**
+  
+  Prisma commands should be run from the project root (where `prisma/` folder exists), not from `server/` directory:
+  
+  ```bash
+  # Wrong:
+  cd server
+  npx prisma migrate dev  # Won't find schema
+  
+  # Correct:
+  cd /path/to/f1-pit-lane-predict  # Project root
+  npx prisma migrate dev
+  ```
+</Accordion>
+
+### Migration issues
+
+<Accordion title="Error: Migration failed to apply">
+  **Problem:** Database schema conflicts with migration.
+
+  **Solution:**
+  
+  <Warning>
+  These solutions modify your database. Back up your data first if it's important.
+  </Warning>
+  
+  1. **Development databases** - Reset and reapply:
+     ```bash
+     npx prisma migrate reset  # Deletes all data
+     npx prisma migrate dev
+     ```
+  
+  2. **Specific migration issues** - Check migration file in `prisma/migrations/`
+  
+  3. **Production-like environments** - Create a new migration to fix conflicts:
+     ```bash
+     npx prisma migrate dev --create-only
+     # Edit the migration file manually
+     npx prisma migrate dev
+     ```
+</Accordion>
+
+## TypeScript issues
+
+### Type checking errors
+
+<Accordion title="Error: Cannot find module '@/components/...'">
+  **Problem:** TypeScript doesn't recognize the `@` path alias.
+
+  **Solution:**
+  
+  This is usually normal - the `@` alias is configured in `vite.config.ts` for Vite, but TypeScript needs its own configuration.
+  
+  1. Verify `tsconfig.app.json` includes:
+     ```json
+     {
+       "compilerOptions": {
+         "paths": {
+           "@/*": ["./src/*"]
+         }
+       }
+     }
+     ```
+  
+  2. Restart your IDE/TypeScript server
+</Accordion>
+
+<Accordion title="Error: Cannot find name 'defineEventHandler'">
+  **Problem:** Nitro.js global types are not recognized.
+
+  **Solution:**
+  
+  1. Ensure you're in the `server/` directory
+  2. Run Nitro's prepare script:
+     ```bash
+     cd server
+     npm run prepare
+     ```
+  3. Restart your TypeScript server in your IDE
+</Accordion>
+
+<Accordion title="Vue component types not working">
+  **Problem:** TypeScript doesn't recognize `.vue` file imports.
+
+  **Solution:**
+  
+  1. Install the Volar extension in VSCode (not Vetur)
+  2. Enable the Vue TypeScript plugin:
+     - Press Cmd/Ctrl + Shift + P
+     - Type "TypeScript: Select TypeScript Version"
+     - Choose "Use Workspace Version"
+  3. Ensure `vue-tsc` is installed:
+     ```bash
+     npm install --save-dev vue-tsc
+     ```
+</Accordion>
+
+## CORS and API issues
+
+### API requests failing
+
+<Accordion title="Error: CORS policy blocked the request">
+  **Problem:** Frontend can't communicate with backend due to CORS.
+
+  **Solution:**
+  
+  1. Verify backend is running (check terminal)
+  2. Check `server/nitro.config.ts` includes CORS config:
+     ```typescript
+     routeRules: {
+       "/api/**": {
+         cors: true,
+         headers: {
+           "Access-Control-Allow-Origin": "*",
+           // ... other headers
+         },
+       },
+     }
+     ```
+  3. Restart the backend server after config changes
+  4. Clear browser cache and hard reload (Cmd/Ctrl + Shift + R)
+</Accordion>
+
+<Accordion title="API returns 404 for all endpoints">
+  **Problem:** Backend routing not working correctly.
+
+  **Solution:**
+  
+  1. Verify backend server is running
+  2. Check the API endpoint URL structure:
+     ```javascript
+     // Correct:
+     axios.get('http://localhost:3000/api/drivers')
+     
+     // Wrong:
+     axios.get('http://localhost:5173/api/drivers')  // Frontend port
+     ```
+  3. Check backend terminal for the actual port number
+  4. Verify file structure in `server/api/` matches expected routes
+</Accordion>
+
+## Build issues
+
+### Frontend build fails
+
+<Accordion title="Error: TypeScript build errors">
+  **Problem:** Type errors prevent successful build.
+
+  **Solution:**
+  
+  1. Run type checking to see all errors:
+     ```bash
+     npm run type-check
+     ```
+  
+  2. Fix each error individually
+  
+  3. Common fixes:
+     - Add proper type annotations
+     - Use `!` operator for non-null assertions (if certain value exists)
+     - Import types: `import type { Driver } from '@prisma/client'`
+</Accordion>
+
+<Accordion title="Error: Out of memory during build">
+  **Problem:** Node.js runs out of memory during large builds.
+
+  **Solution:**
+  
+  Increase Node.js memory limit:
+  
+  ```bash
+  # Temporary (this build only):
+  NODE_OPTIONS="--max-old-space-size=4096" npm run build
+  
+  # Or update package.json:
+  "scripts": {
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build"
+  }
+  ```
+</Accordion>
+
+## General troubleshooting tips
+
+### Clean slate approach
+
+When multiple issues occur, try a complete reset:
+
+<Steps>
+  <Step title="Clean all dependencies">
+    ```bash
+    # Frontend
+    rm -rf node_modules package-lock.json
+    
+    # Backend
+    cd server
+    rm -rf node_modules package-lock.json
+    cd ..
+    ```
+  </Step>
+
+  <Step title="Reinstall everything">
+    ```bash
+    # Frontend
+    npm install
+    
+    # Backend
+    cd server
+    npm install
+    cd ..
+    ```
+  </Step>
+
+  <Step title="Regenerate Prisma client">
+    ```bash
+    npx prisma generate
+    ```
+  </Step>
+
+  <Step title="Restart servers">
+    ```bash
+    # Terminal 1:
+    npm run dev
+    
+    # Terminal 2:
+    cd server && npm run dev
+    ```
+  </Step>
+</Steps>
+
+### Check your environment
+
+Verify your development environment:
+
+```bash
+# Node version (should be 20+)
+node --version
+
+# npm version
+npm --version
+
+# Check if PostgreSQL is running
+psql --version
+
+# Check current directory
+pwd  # Should be in project root
+```
+
+### Enable verbose logging
+
+For more detailed error information:
+
+```bash
+# Frontend with verbose output:
+DEBUG=vite:* npm run dev
+
+# Backend with verbose output:
+NITRO_LOG_LEVEL=debug npm run dev
+```
+
+## Still stuck?
+
+If you can't resolve your issue:
+
+1. Check [existing GitHub issues](https://github.com/P4ND4P0W3R/f1-pit-lane-predict/issues)
+2. Search for your error message online
+3. Create a new issue with:
+   - Detailed description of the problem
+   - Steps to reproduce
+   - Error messages (full stack trace)
+   - Your environment (OS, Node version, etc.)
+   - What you've already tried
+
+<Note>
+When reporting issues, include the output of `node --version` and `npm --version` to help diagnose version-related problems.
+</Note>

@@ -1,0 +1,211 @@
+---
+title: Race schedule and management
+description: View the complete F1 2023 race calendar, track upcoming events, and manage race information
+---
+
+## Overview
+
+The Races feature provides a comprehensive view of the complete 2023 Formula 1 championship calendar. Browse all races in chronological order, view circuit details, and access race-specific information.
+
+## Viewing the race calendar
+
+The Races page displays all championship rounds in a grid layout, ordered sequentially from Round 1 through the season finale.
+
+### Race information displayed
+
+Each race card shows:
+
+- **Round number** - Position in the championship calendar
+- **Race date** - Formatted date of the Grand Prix
+- **Race time** - Local start time for the event
+- **Grand Prix name** - Official race title
+- **Circuit location** - City/locality hosting the race
+- **Country** - Host nation with flag
+- **Circuit diagram** - Visual representation of the track layout
+
+<Info>
+Races are displayed in chronological order based on their round number, making it easy to follow the championship progression.
+</Info>
+
+### Race data structure
+
+The application fetches race data from the `/api/races` endpoint:
+
+```typescript
+interface Race {
+  raceId: number;
+  season: string;
+  round: number;
+  raceName: string;
+  circuitId: string;
+  circuitName: string;
+  locality: string;
+  country: string;
+  date: Date;
+  time: Date;
+  url: string;
+}
+```
+
+## 2023 race calendar
+
+The 2023 F1 season visits iconic circuits around the world:
+
+<Tabs>
+  <Tab title="Early season">
+    - Bahrain International Circuit (Sakhir)
+    - Jeddah Corniche Circuit (Saudi Arabia)
+    - Albert Park Circuit (Melbourne, Australia)
+    - Baku City Circuit (Azerbaijan)
+    - Miami International Autodrome (USA)
+  </Tab>
+  <Tab title="European rounds">
+    - Circuit de Monaco (Monte-Carlo)
+    - Circuit de Barcelona-Catalunya (Spain)
+    - Circuit Gilles Villeneuve (Montreal, Canada)
+    - Red Bull Ring (Spielberg, Austria)
+    - Silverstone Circuit (UK)
+    - Hungaroring (Budapest, Hungary)
+    - Circuit de Spa-Francorchamps (Belgium)
+  </Tab>
+  <Tab title="Late season">
+    - Circuit Zandvoort (Netherlands)
+    - Autodromo Nazionale di Monza (Italy)
+    - Marina Bay Street Circuit (Singapore)
+    - Suzuka International Racing Course (Japan)
+    - Circuit of the Americas (Austin, USA)
+    - Autódromo Hermanos Rodríguez (Mexico City)
+    - Interlagos (São Paulo, Brazil)
+    - Las Vegas Street Circuit (USA)
+    - Yas Marina Circuit (Abu Dhabi, UAE)
+  </Tab>
+</Tabs>
+
+## Race details
+
+Click on any race card to navigate to the race details page, which includes:
+
+- Complete circuit information
+- Race results and standings
+- Driver finishing positions
+- Points awarded
+- Race highlights and statistics
+
+### Date and time formatting
+
+Dates and times are formatted for readability:
+
+```typescript
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = { 
+    year: "numeric", 
+    month: "long", 
+    day: "numeric" 
+  };
+  return date.toLocaleDateString("en-US", options);
+}
+
+function formatTime(timeString: string): string {
+  const time = new Date(timeString);
+  const options: Intl.DateTimeFormatOptions = { 
+    hour: "numeric", 
+    minute: "numeric", 
+    hour12: true 
+  };
+  return time.toLocaleTimeString("en-US", options);
+}
+```
+
+## Race management (Admin only)
+
+<Note>
+Race management features are restricted to authenticated admin users with valid JWT tokens.
+</Note>
+
+Admin users have access to race management controls:
+
+<CardGroup cols={3}>
+  <Card title="Create Race" icon="plus">
+    Add new races to the championship calendar
+  </Card>
+  <Card title="Update Race" icon="pen">
+    Modify race details, dates, and circuit information
+  </Card>
+  <Card title="Delete Race" icon="trash">
+    Remove races from the calendar
+  </Card>
+</CardGroup>
+
+### Creating a race
+
+When adding a new race to the calendar, provide:
+
+- **Season** - Championship year (e.g., "2023")
+- **Round number** - Position in the calendar
+- **Race name** - Official Grand Prix title
+- **Circuit ID** - Unique circuit identifier
+- **Circuit name** - Official circuit name
+- **Locality** - City or region
+- **Country** - Host nation
+- **Date** - Race date
+- **Time** - Race start time
+- **URL** - Reference link for more information
+
+### Race database schema
+
+Races are stored with the following structure:
+
+```prisma
+model Races {
+  raceId      Int       @id @default(autoincrement())
+  season      String?   @db.VarChar(4)
+  round       Int?
+  raceName    String?   @db.VarChar(255)
+  circuitId   String?   @db.VarChar(255)
+  circuitName String?   @db.VarChar(255)
+  locality    String?   @db.VarChar(255)
+  country     String?   @db.VarChar(255)
+  date        DateTime? @db.Date
+  time        DateTime? @db.Time(6)
+  url         String?   @db.VarChar(255)
+  Bets        Bets[]
+  Results     Results[]
+}
+```
+
+## Visual elements
+
+The Races page includes:
+
+- **Country flags** - Visual identification of race locations
+- **Circuit diagrams** - Track layout illustrations
+- **Hover effects** - Interactive card elements
+- **Responsive grid** - Adaptive layout for different screen sizes
+
+<Info>
+Circuit diagrams and country flags are sourced from official Formula 1 media assets to ensure accuracy and visual consistency.
+</Info>
+
+## Navigation workflow
+
+1. **Browse races** - View all championship rounds on the main Races page
+2. **Select a race** - Click any race card to view details
+3. **View results** - See race outcomes and points distribution
+4. **Check driver performance** - Navigate to individual driver profiles from race results
+
+## Authentication and access
+
+The Races page adapts based on user authentication:
+
+```typescript
+const isAuthenticated = ref(false);
+
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  isAuthenticated.value = !!token;
+});
+```
+
+- **Public users** - Can view all races and details
+- **Admin users** - See additional management buttons for create, update, and delete operations

@@ -1,0 +1,140 @@
+---
+title: F1 PitLane Predict
+description: Track and analyze Formula 1 2023 Championship results with a modern web platform built for F1 enthusiasts
+---
+
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.svg"
+  alt="F1 PitLane Predict Hero Light"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.svg"
+  alt="F1 PitLane Predict Hero Dark"
+/>
+
+## Welcome to F1 PitLane Predict
+
+F1 PitLane Predict is a dedicated online platform for Formula 1 fans to track and engage with the 2023 F1 Championship. Built with modern web technologies, it provides comprehensive race results, driver standings, constructor standings, and race management capabilities.
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get your development environment up and running in minutes
+  </Card>
+  <Card
+    title="Installation"
+    icon="download"
+    href="/installation"
+  >
+    Detailed setup instructions for all components and dependencies
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api/drivers/list"
+  >
+    Explore the complete API endpoints for drivers, teams, races, and results
+  </Card>
+  <Card
+    title="Database Schema"
+    icon="database"
+    href="/database/schema"
+  >
+    Understanding the data models and relationships
+  </Card>
+</CardGroup>
+
+## What you can build
+
+F1 PitLane Predict provides a foundation for tracking Formula 1 championship data with features including:
+
+- **Driver standings** - Track driver performance across the 2023 season with detailed profiles
+- **Constructor standings** - Monitor team performance and rankings
+- **Race management** - Comprehensive race data including circuits, dates, and results
+- **User authentication** - Secure user registration and login system
+- **Results tracking** - Record and analyze race results with position and points data
+
+## Technology stack
+
+The platform leverages a modern, full-stack JavaScript/TypeScript architecture:
+
+### Frontend
+- **Vue.js 3** - Reactive, component-based UI framework
+- **Vue Router** - Client-side routing
+- **Vuex** - State management
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and development server
+- **Axios** - HTTP client for API communication
+
+### Backend
+- **Nitro.js** - Next generation server toolkit with built-in API routes
+- **Prisma ORM** - Type-safe database client
+- **PostgreSQL** - Robust relational database
+- **Node.js 20+** - Runtime environment
+- **JWT** - JSON Web Token authentication
+- **bcrypt** - Password hashing
+
+<Note>
+  This project was created as part of an Advanced Web Programming course and serves as a foundation that can be extended with additional features like live race tracking, betting systems, and personalized predictions.
+</Note>
+
+## Key features
+
+### Driver management
+
+Manage comprehensive driver profiles with personal information, team associations, and performance data. Each driver record includes:
+
+- Unique driver ID and code
+- Personal details (name, nationality, date of birth)
+- Permanent number and team assignment
+- Driver images and URLs
+
+### Race tracking
+
+Track all 2023 F1 races with detailed information:
+
+- Race name, circuit, and location
+- Date and time information
+- Season and round numbers
+- Race results and standings
+
+### Results system
+
+Record and analyze race outcomes:
+
+- Driver finishing positions
+- Points awarded per race
+- Linked to both driver and race data
+
+### User system
+
+Secure user authentication and management:
+
+- User registration and login
+- Profile management
+- Session tracking with JWT
+- Role-based access (regular/admin)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Get started quickly"
+    icon="bolt"
+    href="/quickstart"
+  >
+    Follow our quickstart guide to clone, install, and run the application
+  </Card>
+  <Card
+    title="Detailed installation"
+    icon="gear"
+    href="/installation"
+  >
+    Learn about prerequisites, database setup, and configuration options
+  </Card>
+</CardGroup>

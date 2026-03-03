@@ -1,0 +1,168 @@
+---
+title: Delete team
+description: Delete a Formula 1 team (admin only)
+---
+
+## Endpoint
+
+```
+DELETE /api/teams/delete
+```
+
+Deletes a Formula 1 team from the database. This endpoint requires admin authentication via JWT token.
+
+## Authentication
+
+This endpoint requires an admin JWT token. The token must:
+- Be valid and not expired
+- Contain a `userType` field with value `"admin"`
+- Be signed with the application's secret key
+
+## Request
+
+<ParamField body="teamId" type="string" required>
+  The unique identifier of the team to delete
+</ParamField>
+
+<ParamField body="token" type="string" required>
+  JWT authentication token with admin privileges
+</ParamField>
+
+## Response
+
+### Success (200)
+
+Returns an object containing the status and the deleted team data.
+
+<ResponseField name="status" type="number">
+  HTTP status code (200 for success)
+</ResponseField>
+
+<ResponseField name="body" type="string">
+  JSON stringified deleted team object containing:
+  
+  <Expandable title="Team object">
+    <ResponseField name="teamId" type="string">
+      The unique identifier of the deleted team
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Full name of the deleted team
+    </ResponseField>
+    
+    <ResponseField name="nationality" type="string">
+      Nationality of the deleted team
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      URL to the deleted team's official page
+    </ResponseField>
+    
+    <ResponseField name="teamLogo" type="string">
+      URL to the deleted team's logo image
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Error responses
+
+<ResponseField name="400 - Bad Request">
+  Returned when no token is provided in the request body
+  
+  ```json
+  {
+    "status": 400,
+    "body": "{\"error\":\"Bad Request\"}"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="401 - Unauthorized">
+  Returned when:
+  - JWT verification fails
+  - Token has expired
+  
+  ```json
+  {
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  }
+  ```
+  
+  or
+  
+  ```json
+  {
+    "status": 401,
+    "body": "{\"error\":\"Token has expired\"}"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="403 - Forbidden">
+  Returned when the authenticated user does not have admin privileges
+  
+  ```json
+  {
+    "status": 403,
+    "body": "{\"error\":\"Forbidden\"}"
+  }
+  ```
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://your-domain.com/api/teams/delete \
+  -H "Content-Type: application/json" \
+  -d '{
+    "teamId": "haas",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://your-domain.com/api/teams/delete', {
+  method: 'DELETE',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teamId: 'haas',
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+  })
+});
+
+const data = await response.json();
+```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "status": 200,
+  "body": "{\"teamId\":\"haas\",\"name\":\"Haas F1 Team\",\"nationality\":\"American\",\"url\":\"https://www.haasf1team.com\",\"teamLogo\":\"https://example.com/logos/haas.png\"}"
+}
+```
+
+## Implementation notes
+
+The deletion is performed using Prisma's `delete` method as shown in `/home/daytona/workspace/source/server/api/teams/delete.ts:42-46`:
+
+```typescript
+const deletedTeam = await db.teams.delete({
+    where: {
+        teamId: teamId,
+    },
+});
+```
+
+The response includes the deleted team object, allowing you to confirm which team was removed from the database.
+
+## Important considerations
+
+- Deleting a team may affect related drivers if there are foreign key constraints in the database
+- The endpoint returns the deleted team object for confirmation purposes
+- This operation is irreversible and should be used with caution

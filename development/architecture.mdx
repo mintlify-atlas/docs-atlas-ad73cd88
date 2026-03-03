@@ -1,0 +1,221 @@
+---
+title: System architecture
+description: Learn about F1 PitLane Predict's architecture, tech stack, and folder structure
+---
+
+## Overview
+
+F1 PitLane Predict is built as a full-stack web application with a clear separation between frontend and backend services. The application uses modern web technologies to deliver a responsive user experience for tracking Formula 1 race results and predictions.
+
+## Tech stack
+
+### Frontend
+
+The client-side application is built with:
+
+- **Vue.js 3.3.4** - Progressive JavaScript framework for building the user interface
+- **Vue Router 4.2.5** - Official routing library for navigation between views
+- **Vuex 4.1.0** - State management for centralized application state
+- **Axios 1.6.2** - HTTP client for API communication
+- **TypeScript 5.2** - Type-safe JavaScript with static typing
+- **Vite 5.4.20** - Fast build tool and development server
+
+### Backend
+
+The server-side application uses:
+
+- **Node.js 20+** - JavaScript runtime environment
+- **Nitro.js (unjs)** - Next generation server toolkit for building APIs
+- **TypeScript** - Type safety across the backend codebase
+- **Prisma ORM 5.7.0** - Type-safe database client
+- **PostgreSQL** - Primary relational database
+- **bcrypt 5.1.1** - Password hashing for user authentication
+- **jsonwebtoken 9.0.2** - JWT token generation and validation
+
+## Architecture overview
+
+### Client-server separation
+
+The application runs two separate development servers:
+
+1. **Frontend server** - Runs on `http://localhost:5173` using Vite
+2. **Backend server** - Runs independently using Nitro.js dev server
+
+<Note>
+This separation allows independent scaling and deployment of frontend and backend services. The backend is configured with CORS to accept requests from any origin during development.
+</Note>
+
+### Communication flow
+
+```
+┌─────────────┐      HTTP/REST API      ┌─────────────┐
+│   Vue.js    │ ───────────────────────> │   Nitro.js  │
+│  Frontend   │ <─────────────────────── │   Backend   │
+│  (Port      │      JSON Response       │   (Server)  │
+│   5173)     │                          │             │
+└─────────────┘                          └─────────────┘
+                                               │
+                                               │ Prisma ORM
+                                               ▼
+                                         ┌─────────────┐
+                                         │ PostgreSQL  │
+                                         │  Database   │
+                                         └─────────────┘
+```
+
+## Folder structure
+
+### Frontend structure
+
+<Accordion title="src/ - Frontend source code">
+  ```
+  src/
+  ├── assets/          # Static assets (images, fonts, CSS)
+  │   └── main.css     # Global styles
+  ├── components/      # Reusable Vue components
+  ├── router/          # Vue Router configuration
+  ├── views/           # Page-level components
+  ├── App.vue          # Root component
+  └── main.ts          # Application entry point
+  ```
+
+  **Key directories:**
+  - `components/` - Shared, reusable UI components
+  - `views/` - Full page components mapped to routes
+  - `router/` - Route definitions and navigation logic
+</Accordion>
+
+### Backend structure
+
+<Accordion title="server/ - Backend source code">
+  ```
+  server/
+  ├── api/                    # API endpoint handlers
+  │   ├── drivers/           # Driver management endpoints
+  │   │   ├── index.ts       # Get all drivers
+  │   │   ├── create.ts      # Create driver
+  │   │   ├── update.ts      # Update driver
+  │   │   └── delete.ts      # Delete driver
+  │   ├── races/             # Race management endpoints
+  │   ├── results/           # Race results endpoints
+  │   ├── teams/             # Team management endpoints
+  │   ├── user/              # User authentication endpoints
+  │   └── index.ts           # API health check
+  ├── nitro.config.ts        # Nitro server configuration
+  └── package.json           # Backend dependencies
+  ```
+
+  **Key directories:**
+  - `api/` - RESTful API endpoints using Nitro's file-based routing
+  - Each subdirectory represents a resource with CRUD operations
+</Accordion>
+
+<Accordion title="prisma/ - Database schema and migrations">
+  ```
+  prisma/
+  └── schema.prisma          # Database schema definition
+  ```
+
+  **Database models:**
+  - `Users` - User accounts and authentication
+  - `Drivers` - F1 driver information
+  - `Teams` - Constructor/team data
+  - `Races` - Race events and circuits
+  - `Results` - Race outcomes and points
+  - `Bets` - User predictions and betting data
+</Accordion>
+
+## Key architectural decisions
+
+### Why Nitro.js?
+
+Nitro.js was chosen as the backend framework because:
+
+- **Minimal boilerplate** - File-based routing reduces configuration
+- **TypeScript-first** - Native TypeScript support without additional setup
+- **Fast development** - Hot module replacement for rapid iteration
+- **Lightweight** - Small footprint compared to full frameworks
+- **Flexible deployment** - Can deploy to various platforms
+
+### Why Prisma ORM?
+
+Prisma provides several advantages:
+
+- **Type safety** - Auto-generated TypeScript types from schema
+- **Developer experience** - Intuitive query API and migrations
+- **Database agnostic** - Easy to switch databases if needed
+- **Performance** - Optimized query generation
+
+### Why separate frontend/backend?
+
+The decoupled architecture offers:
+
+- **Independent scaling** - Scale frontend and backend separately
+- **Team productivity** - Frontend and backend teams can work independently
+- **Deployment flexibility** - Deploy to different hosting services
+- **Technology flexibility** - Replace either layer without affecting the other
+
+## API design
+
+### RESTful endpoints
+
+The backend follows REST conventions with file-based routing:
+
+- `GET /api/drivers` - List all drivers
+- `POST /api/drivers/create` - Create a new driver
+- `PUT /api/drivers/update` - Update a driver
+- `DELETE /api/drivers/delete` - Remove a driver
+
+Similar patterns apply to other resources (races, teams, results, users).
+
+### CORS configuration
+
+The backend is configured in `server/nitro.config.ts` to allow cross-origin requests:
+
+```typescript
+routeRules: {
+  "/api/**": {
+    cors: true,
+    headers: {
+      "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Allow-Headers": "*",
+    },
+  },
+}
+```
+
+<Warning>
+The current CORS configuration allows all origins (`*`). For production deployment, restrict this to specific domains for security.
+</Warning>
+
+## Build configuration
+
+### Frontend build
+
+Vite is configured in `vite.config.ts` with:
+
+- Vue.js plugin for `.vue` file support
+- Path alias `@` pointing to `./src` for cleaner imports
+- Development server on port 5173
+
+### Backend build
+
+Nitro compiles the backend into an optimized Node.js server:
+
+```bash
+npm run build  # Creates .output/server/index.mjs
+```
+
+## Type safety
+
+The application maintains type safety across all layers:
+
+1. **Frontend** - Vue components use TypeScript with `vue-tsc` for type checking
+2. **Backend** - Nitro endpoints use TypeScript
+3. **Database** - Prisma generates types from the schema automatically
+
+<Note>
+Run `npm run type-check` in the frontend directory to verify type correctness without building.
+</Note>

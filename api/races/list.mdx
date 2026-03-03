@@ -1,0 +1,115 @@
+---
+title: List races
+description: Retrieve all races from the database
+---
+
+## Endpoint
+
+```
+GET /api/races
+```
+
+Retrieve a list of all races in the F1 PitLane Predict database. This endpoint returns all race records including season information, circuit details, and race dates.
+
+## Request
+
+This endpoint does not require any parameters or authentication.
+
+### Example request
+
+```bash
+curl -X GET https://api.f1pitlanepredict.com/api/races
+```
+
+## Response
+
+<ResponseField name="data" type="array">
+  Array of race objects
+  
+  <Expandable title="Race object properties">
+    <ResponseField name="raceId" type="integer">
+      Unique identifier for the race
+    </ResponseField>
+    
+    <ResponseField name="season" type="string">
+      Season year (4-character string)
+    </ResponseField>
+    
+    <ResponseField name="round" type="integer">
+      Round number in the season
+    </ResponseField>
+    
+    <ResponseField name="raceName" type="string">
+      Name of the race
+    </ResponseField>
+    
+    <ResponseField name="circuitId" type="string">
+      Unique identifier for the circuit
+    </ResponseField>
+    
+    <ResponseField name="circuitName" type="string">
+      Name of the circuit
+    </ResponseField>
+    
+    <ResponseField name="locality" type="string">
+      City or locality where the race takes place
+    </ResponseField>
+    
+    <ResponseField name="country" type="string">
+      Country where the race takes place
+    </ResponseField>
+    
+    <ResponseField name="date" type="string">
+      Race date (ISO 8601 format)
+    </ResponseField>
+    
+    <ResponseField name="time" type="string">
+      Race time
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      URL with additional race information
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "data": [
+    {
+      "raceId": 1,
+      "season": "2024",
+      "round": 1,
+      "raceName": "Bahrain Grand Prix",
+      "circuitId": "bahrain",
+      "circuitName": "Bahrain International Circuit",
+      "locality": "Sakhir",
+      "country": "Bahrain",
+      "date": "2024-03-02T00:00:00.000Z",
+      "time": "15:00:00",
+      "url": "https://en.wikipedia.org/wiki/2024_Bahrain_Grand_Prix"
+    },
+    {
+      "raceId": 2,
+      "season": "2024",
+      "round": 2,
+      "raceName": "Saudi Arabian Grand Prix",
+      "circuitId": "jeddah",
+      "circuitName": "Jeddah Corniche Circuit",
+      "locality": "Jeddah",
+      "country": "Saudi Arabia",
+      "date": "2024-03-09T00:00:00.000Z",
+      "time": "17:00:00",
+      "url": "https://en.wikipedia.org/wiki/2024_Saudi_Arabian_Grand_Prix"
+    }
+  ]
+}
+```
+
+## Error responses
+
+This endpoint returns standard HTTP error codes for server errors:
+
+- `500` - Internal server error

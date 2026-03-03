@@ -1,0 +1,111 @@
+---
+title: "Register user"
+description: "Create a new user account with username, email, and password"
+---
+
+## Endpoint
+
+```
+POST /api/user/register
+```
+
+Creates a new user account in the F1 PitLane Predict platform. Passwords are securely hashed using bcrypt with a salt round of 12 before being stored in the database.
+
+## Request body
+
+<ParamField body="username" type="string" required>
+  Unique username for the account. Must be unique across all users.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  User's email address. Must be unique across all users.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password. Will be hashed using bcrypt before storage.
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="number">
+  HTTP status code (200 for success)
+</ResponseField>
+
+<ResponseField name="body" type="string">
+  JSON stringified user object containing the created user data
+</ResponseField>
+
+<Expandable title="User object properties">
+  <ResponseField name="userId" type="number">
+    Auto-generated unique identifier for the user
+  </ResponseField>
+
+  <ResponseField name="username" type="string">
+    The username provided during registration
+  </ResponseField>
+
+  <ResponseField name="email" type="string">
+    The email address provided during registration
+  </ResponseField>
+
+  <ResponseField name="password" type="string">
+    The hashed password (bcrypt hash)
+  </ResponseField>
+
+  <ResponseField name="balance" type="decimal">
+    Initial account balance (defaults to 0.00)
+  </ResponseField>
+
+  <ResponseField name="createdAt" type="datetime">
+    Timestamp when the account was created
+  </ResponseField>
+
+  <ResponseField name="lastLogin" type="datetime" optional>
+    Last login timestamp (null for new accounts)
+  </ResponseField>
+
+  <ResponseField name="country" type="string" optional>
+    User's country (null for new accounts)
+  </ResponseField>
+
+  <ResponseField name="userType" type="string">
+    Type of user account (defaults to "regular")
+  </ResponseField>
+</Expandable>
+
+## Example request
+
+```bash cURL
+curl -X POST https://api.f1pitlane.com/api/user/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "racing_fan_123",
+    "email": "fan@example.com",
+    "password": "SecureP@ssw0rd"
+  }'
+```
+
+## Example response
+
+```json
+{
+  "status": 200,
+  "body": "{\"userId\":42,\"username\":\"racing_fan_123\",\"email\":\"fan@example.com\",\"password\":\"$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5ux6K0H1g6pYS\",\"balance\":\"0.00\",\"createdAt\":\"2026-03-03T10:30:00.000Z\",\"lastLogin\":null,\"country\":null,\"userType\":\"regular\"}"
+}
+```
+
+## Error responses
+
+The endpoint may return errors in the following scenarios:
+
+- **Duplicate username**: If the username is already taken
+- **Duplicate email**: If the email is already registered
+- **Invalid method**: If a method other than POST is used
+- **Database errors**: If there are issues connecting to or writing to the database
+
+## Implementation details
+
+- Password hashing uses bcrypt with 12 salt rounds (source: `server/api/user/register.ts:16`)
+- User records are created in the PostgreSQL database via Prisma ORM (source: `server/api/user/register.ts:18-24`)
+- Username and email fields must be unique as defined in the database schema
+- New users are assigned a default balance of 0.00 and userType of "regular"

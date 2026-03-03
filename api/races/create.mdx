@@ -1,0 +1,208 @@
+---
+title: Create race
+description: Create a new race record in the database
+---
+
+## Endpoint
+
+```
+POST /api/races/create
+```
+
+Create a new race record in the F1 PitLane Predict database. This endpoint requires admin authentication via JWT token.
+
+## Authentication
+
+This endpoint requires admin privileges. Include a valid JWT token in the request body with `userType` set to `admin`.
+
+## Request body
+
+<ParamField body="token" type="string" required>
+  JWT authentication token with admin privileges
+</ParamField>
+
+<ParamField body="raceId" type="integer" required>
+  Unique identifier for the race
+</ParamField>
+
+<ParamField body="season" type="string" required>
+  Season year (4-character string)
+</ParamField>
+
+<ParamField body="round" type="integer" required>
+  Round number in the season
+</ParamField>
+
+<ParamField body="raceName" type="string" required>
+  Name of the race
+</ParamField>
+
+<ParamField body="circuitId" type="string" required>
+  Unique identifier for the circuit
+</ParamField>
+
+<ParamField body="circuitName" type="string" required>
+  Name of the circuit
+</ParamField>
+
+<ParamField body="locality" type="string" required>
+  City or locality where the race takes place
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  Country where the race takes place
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Race date (ISO 8601 format)
+</ParamField>
+
+<ParamField body="time" type="string" required>
+  Race time
+</ParamField>
+
+<ParamField body="url" type="string" required>
+  URL with additional race information
+</ParamField>
+
+### Example request
+
+```bash
+curl -X POST https://api.f1pitlanepredict.com/api/races/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "raceId": 1,
+    "season": "2024",
+    "round": 1,
+    "raceName": "Bahrain Grand Prix",
+    "circuitId": "bahrain",
+    "circuitName": "Bahrain International Circuit",
+    "locality": "Sakhir",
+    "country": "Bahrain",
+    "date": "2024-03-02T00:00:00.000Z",
+    "time": "15:00:00",
+    "url": "https://en.wikipedia.org/wiki/2024_Bahrain_Grand_Prix"
+  }'
+```
+
+## Response
+
+<ResponseField name="status" type="integer">
+  HTTP status code
+</ResponseField>
+
+<ResponseField name="body" type="string">
+  JSON stringified response containing the created race object or error message
+  
+  <Expandable title="Success response properties">
+    <ResponseField name="raceId" type="integer">
+      Unique identifier for the race
+    </ResponseField>
+    
+    <ResponseField name="season" type="string">
+      Season year (4-character string)
+    </ResponseField>
+    
+    <ResponseField name="round" type="integer">
+      Round number in the season
+    </ResponseField>
+    
+    <ResponseField name="raceName" type="string">
+      Name of the race
+    </ResponseField>
+    
+    <ResponseField name="circuitId" type="string">
+      Unique identifier for the circuit
+    </ResponseField>
+    
+    <ResponseField name="circuitName" type="string">
+      Name of the circuit
+    </ResponseField>
+    
+    <ResponseField name="locality" type="string">
+      City or locality where the race takes place
+    </ResponseField>
+    
+    <ResponseField name="country" type="string">
+      Country where the race takes place
+    </ResponseField>
+    
+    <ResponseField name="date" type="string">
+      Race date (ISO 8601 format)
+    </ResponseField>
+    
+    <ResponseField name="time" type="string">
+      Race time
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      URL with additional race information
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "status": 200,
+  "body": "{
+    \"raceId\": 1,
+    \"season\": \"2024\",
+    \"round\": 1,
+    \"raceName\": \"Bahrain Grand Prix\",
+    \"circuitId\": \"bahrain\",
+    \"circuitName\": \"Bahrain International Circuit\",
+    \"locality\": \"Sakhir\",
+    \"country\": \"Bahrain\",
+    \"date\": \"2024-03-02T00:00:00.000Z\",
+    \"time\": \"15:00:00\",
+    \"url\": \"https://en.wikipedia.org/wiki/2024_Bahrain_Grand_Prix\"
+  }"
+}
+```
+
+## Error responses
+
+<ResponseField name="400 Bad Request">
+  Missing or invalid token in request body
+  
+  ```json
+  {
+    "status": 400,
+    "body": "{\"error\": \"Bad Request\"}"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+  JWT verification failed or token has expired
+  
+  ```json
+  {
+    "status": 401,
+    "body": "{\"error\": \"Unauthorized\"}"
+  }
+  ```
+  
+  or
+  
+  ```json
+  {
+    "status": 401,
+    "body": "{\"error\": \"Token has expired\"}"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+  User does not have admin privileges
+  
+  ```json
+  {
+    "status": 403,
+    "body": "{\"error\": \"Forbidden\"}"
+  }
+  ```
+</ResponseField>

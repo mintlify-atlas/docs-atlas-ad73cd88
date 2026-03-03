@@ -1,0 +1,211 @@
+---
+title: Race results and points system
+description: View race outcomes, finishing positions, and understand how championship points are awarded
+---
+
+## Overview
+
+The Results feature displays the finishing order and points awarded for each Formula 1 race in the 2023 championship. Results determine both the Drivers' Championship and Constructors' Championship standings.
+
+## Viewing race results
+
+Race results are displayed in a table format showing the complete finishing order for each Grand Prix.
+
+### Results information displayed
+
+For each race, the results table shows:
+
+- **Position** - Finishing position (1st, 2nd, 3rd, etc.)
+- **Driver name** - Full name of the driver
+- **Points awarded** - Championship points earned
+
+<Info>
+Results are ordered by finishing position, with the race winner at the top. Drivers are linked to their profile pages for quick navigation.
+</Info>
+
+### Results data structure
+
+The application fetches results from the `/api/results` endpoint:
+
+```typescript
+interface Result {
+  resultId: number;
+  raceId: number;
+  driverId: string;
+  position: number;
+  points: number;
+}
+```
+
+## Accessing race results
+
+To view results for a specific race:
+
+1. Navigate to the Races page
+2. Click on the desired Grand Prix card
+3. The race results page displays with the complete finishing order
+
+The application filters results by race ID:
+
+```typescript
+const raceId = route.params.raceId;
+results.value = data.data.filter((result: Result) => 
+  result.raceId === Number(raceId)
+);
+```
+
+## Points system
+
+Formula 1 awards championship points to the top finishers in each race according to the standard F1 points system:
+
+<CardGroup cols={2}>
+  <Card title="Top positions" icon="trophy">
+    - 1st place: 25 points
+    - 2nd place: 18 points
+    - 3rd place: 15 points
+    - 4th place: 12 points
+    - 5th place: 10 points
+  </Card>
+  <Card title="Points positions" icon="star">
+    - 6th place: 8 points
+    - 7th place: 6 points
+    - 8th place: 4 points
+    - 9th place: 2 points
+    - 10th place: 1 point
+  </Card>
+</CardGroup>
+
+<Note>
+Drivers finishing 11th or lower do not score championship points. Additional points may be awarded for fastest lap if the driver finishes in the top 10.
+</Note>
+
+## Results database schema
+
+Results are stored with relationships to both races and drivers:
+
+```prisma
+model Results {
+  resultId Int      @id @default(autoincrement())
+  raceId   Int?
+  driverId String?  @db.VarChar(50)
+  position Int
+  points   Int
+  Drivers  Drivers? @relation(fields: [driverId], references: [driverId], onDelete: NoAction, onUpdate: NoAction)
+  Races    Races?   @relation(fields: [raceId], references: [raceId], onDelete: NoAction, onUpdate: NoAction)
+}
+```
+
+This structure ensures:
+- Each result is linked to a specific race
+- Each result is linked to a specific driver
+- Position and points are tracked for championship calculations
+
+## Championship calculations
+
+Results directly impact championship standings:
+
+### Drivers' Championship
+
+Driver standings are calculated by:
+1. Summing all points earned across all races
+2. Sorting drivers by total points in descending order
+3. Updating the standings after each race
+
+```typescript
+const totalPoints = driver.Results.reduce(
+  (sum, result) => sum + (result.points || 0), 0
+);
+```
+
+### Constructors' Championship
+
+Team standings are calculated by:
+1. Identifying both drivers for each team
+2. Summing all points earned by both team drivers
+3. Sorting teams by combined points
+4. Updating constructor standings after each race
+
+## Interactive features
+
+<Tabs>
+  <Tab title="Driver links">
+    Click on any driver name in the results table to navigate to their detailed profile:
+    
+    ```typescript
+    <RouterLink :to="'/driver/' + result.driverId">
+      {{ getDriverName(result.driverId) }}
+    </RouterLink>
+    ```
+    
+    This allows quick access to driver statistics and complete season performance.
+  </Tab>
+  <Tab title="Race context">
+    The results page displays the race name at the top:
+    
+    ```typescript
+    <h1>Results of the {{ raceName }}</h1>
+    ```
+    
+    This provides context for which Grand Prix results you're viewing.
+  </Tab>
+</Tabs>
+
+## Results table format
+
+The results are displayed in a clean, readable table:
+
+- **Header row** - Position, Driver, Points
+- **Data rows** - One row per driver, ordered by finishing position
+- **Hover effects** - Driver names change color on hover for better UX
+- **Responsive design** - Table adapts to different screen sizes
+
+```vue
+<table class="results-table">
+  <thead>
+    <tr>
+      <th>Position</th>
+      <th>Driver</th>
+      <th>Points</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="result in results" :key="result.driverId">
+      <td>{{ result.position }}</td>
+      <td>{{ getDriverName(result.driverId) }}</td>
+      <td>{{ result.points }} PTS</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+## Driver name mapping
+
+The application maps driver IDs to full names for display:
+
+```typescript
+function getDriverName(driverId: string): string {
+  const driverName: { [key: string]: string } = {
+    "max_verstappen": "Max Verstappen",
+    "perez": "Sergio Perez",
+    "hamilton": "Lewis Hamilton",
+    "leclerc": "Charles Leclerc",
+    // ... additional drivers
+  }
+  return driverName[driverId] || "Driver Name";
+}
+```
+
+This ensures consistent, readable driver names throughout the results display.
+
+## Page metadata
+
+The page title dynamically updates to reflect the current race:
+
+```typescript
+if (race.value && race.value.length > 0) {
+  raceName.value = race.value[0].raceName;
+  document.title = raceName.value + " Results";
+}
+```
+
+This improves navigation clarity and browser tab identification.

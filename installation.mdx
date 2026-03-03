@@ -1,0 +1,417 @@
+---
+title: Installation
+description: Complete installation guide for F1 PitLane Predict including prerequisites, dependencies, and database setup
+---
+
+## Prerequisites
+
+Before installing F1 PitLane Predict, ensure your development environment meets the following requirements:
+
+### Node.js and npm
+
+F1 PitLane Predict requires Node.js 20 (LTS) or higher.
+
+<CodeGroup>
+
+```bash Check Node.js version
+node --version
+# Should output v20.x.x or higher
+```
+
+```bash Check npm version
+npm --version
+# Should output 10.x.x or higher
+```
+
+</CodeGroup>
+
+If you need to install or update Node.js, download it from [nodejs.org](https://nodejs.org/).
+
+### PostgreSQL
+
+The application uses PostgreSQL as its database. You need PostgreSQL 12 or higher installed and running.
+
+<CodeGroup>
+
+```bash macOS (Homebrew)
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+```bash Ubuntu/Debian
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+```bash Windows
+# Download installer from postgresql.org
+# Or use chocolatey:
+choco install postgresql
+```
+
+</CodeGroup>
+
+Verify PostgreSQL is running:
+
+```bash
+psql --version
+# Should output: psql (PostgreSQL) 12.x or higher
+```
+
+### Development tools
+
+Recommended IDE setup:
+
+- **VSCode** with extensions:
+  - Volar (Vue Language Features)
+  - TypeScript Vue Plugin (Volar)
+  - Prisma (for schema editing)
+
+<Note>
+  If you have Vetur installed, disable it when working with Vue 3 projects. Volar is the recommended extension for Vue 3.
+</Note>
+
+## Installation steps
+
+### 1. Clone the repository
+
+Clone the project from GitHub:
+
+```bash
+git clone https://github.com/P4ND4P0W3R/f1-pit-lane-predict.git
+cd f1-pit-lane-predict
+```
+
+### 2. Install dependencies
+
+#### Frontend dependencies
+
+Install the Vue.js frontend dependencies:
+
+```bash
+npm install
+```
+
+This installs the following key packages:
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| `vue` | ^3.3.4 | Core Vue.js framework |
+| `vue-router` | ^4.2.5 | Client-side routing |
+| `vuex` | ^4.1.0 | State management |
+| `@prisma/client` | ^5.7.0 | Database client |
+| `axios` | ^1.6.2 | HTTP client |
+| `jsonwebtoken` | ^9.0.2 | JWT authentication |
+| `typescript` | ~5.2.0 | Type safety |
+| `vite` | ^5.4.20 | Build tool and dev server |
+
+#### Backend dependencies
+
+Navigate to the server directory and install backend packages:
+
+```bash
+cd server
+npm install
+cd ..
+```
+
+This installs:
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| `nitropack` | latest | Server framework |
+| `bcrypt` | ^5.1.1 | Password hashing |
+
+### 3. Database setup
+
+#### Create the database
+
+Create a new PostgreSQL database for the application:
+
+```bash
+# Using createdb command
+creatdb f1_pitlane_predict
+
+# Or using psql
+psql -U postgres
+CREATE DATABASE f1_pitlane_predict;
+\q
+```
+
+#### Configure environment variables
+
+Create a `.env` file in the project root directory:
+
+```bash .env
+DATABASE_URL="postgresql://username:password@localhost:5432/f1_pitlane_predict?schema=public"
+```
+
+Replace the connection string parameters:
+
+- `username` - Your PostgreSQL username (default: `postgres`)
+- `password` - Your PostgreSQL password
+- `localhost` - Database host (use `localhost` for local development)
+- `5432` - PostgreSQL port (default: 5432)
+- `f1_pitlane_predict` - Database name
+
+<Warning>
+  The `.env` file contains sensitive credentials and is already included in `.gitignore`. Never commit this file to version control.
+</Warning>
+
+#### Generate Prisma Client
+
+Generate the Prisma Client based on your schema:
+
+```bash
+npx prisma generate
+```
+
+This creates type-safe database client code in `node_modules/@prisma/client`.
+
+#### Run database migrations
+
+Create the database schema by running migrations:
+
+```bash
+npx prisma migrate dev --name init
+```
+
+This command:
+1. Creates migration files in `prisma/migrations/`
+2. Applies the migration to your database
+3. Generates Prisma Client
+
+You should see output confirming the tables were created:
+
+```
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20231201000000_init/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+```
+
+#### Verify database schema
+
+Open Prisma Studio to visually inspect your database:
+
+```bash
+npx prisma studio
+```
+
+This opens a browser interface at `http://localhost:5555` where you can view and edit your data.
+
+## Database schema overview
+
+The application uses the following data models:
+
+### Core models
+
+**Drivers** - F1 driver information
+- Driver ID, code, and permanent number
+- Personal details (name, nationality, date of birth)
+- Team association (foreign key to Teams)
+- Driver image and profile URL
+
+**Teams** - Constructor/team information
+- Team ID, name, and nationality
+- Team logo and official URL
+- One-to-many relationship with Drivers
+
+**Races** - Race event details
+- Season, round, and race name
+- Circuit information (ID, name, location, country)
+- Date and time of the race
+- One-to-many relationship with Results
+
+**Results** - Race outcome data
+- Links to Race and Driver (foreign keys)
+- Finishing position and points awarded
+
+**Users** - User account management
+- Username, email, and hashed password
+- Account balance for betting features
+- User type (regular/admin)
+- Created date and last login tracking
+
+**Bets** - Betting system (future feature)
+- Links to User, Race, and Driver
+- Bet amount, odds, and status
+- Created timestamp
+
+<Note>
+  The Bets model is included in the schema for future betting functionality but is not fully implemented in the current version.
+</Note>
+
+## Configuration
+
+### Frontend configuration
+
+The frontend uses Vite for development and building. Configuration is in `vite.config.ts`.
+
+### Backend configuration
+
+The Nitro.js backend is configured in `server/nitro.config.ts`:
+
+```typescript server/nitro.config.ts
+export default defineNitroConfig({
+  routeRules: {
+    "/api/**": {
+      cors: true,
+      headers: {
+        "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Headers": "*",
+      },
+    },
+  },
+});
+```
+
+This configuration enables CORS for all API routes, allowing the frontend to communicate with the backend during development.
+
+## Running the application
+
+### Development mode
+
+Run both the frontend and backend in development mode:
+
+**Terminal 1 - Frontend:**
+```bash
+npm run dev
+```
+
+Access the frontend at `http://localhost:5173`
+
+**Terminal 2 - Backend:**
+```bash
+cd server
+npm run dev
+```
+
+API available at `http://localhost:3000`
+
+### Production build
+
+Build the frontend for production:
+
+```bash
+# Type check
+npm run type-check
+
+# Build
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+Build the backend:
+
+```bash
+cd server
+npm run build
+
+# Run production server
+npm run preview
+```
+
+## Troubleshooting
+
+### Prisma Client errors
+
+If you encounter "Cannot find module '@prisma/client'" errors:
+
+```bash
+npx prisma generate
+```
+
+Always run this after modifying `prisma/schema.prisma`.
+
+### Database connection issues
+
+Test your database connection:
+
+```bash
+npx prisma db pull
+```
+
+This introspects your database and should confirm connectivity.
+
+If connection fails:
+1. Verify PostgreSQL is running: `pg_isready`
+2. Check credentials in `.env`
+3. Ensure the database exists
+4. Verify firewall/network settings
+
+### Type errors in Vue components
+
+Vue 3 with TypeScript requires special handling. Ensure you have:
+
+1. `vue-tsc` installed (dev dependency)
+2. TypeScript Vue Plugin (Volar) enabled in VSCode
+3. Vetur extension disabled
+
+Run type checking:
+
+```bash
+npm run type-check
+```
+
+### Port conflicts
+
+If ports 5173 or 3000 are in use:
+
+<CodeGroup>
+
+```typescript vite.config.ts
+export default defineConfig({
+  server: {
+    port: 5174 // Change to available port
+  }
+})
+```
+
+```bash Find process using port
+lsof -i :5173
+kill -9 <PID>
+```
+
+</CodeGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card
+    title="API reference"
+    icon="code"
+    href="/api/drivers/list"
+  >
+    Explore the REST API endpoints for drivers, teams, races, and more
+  </Card>
+  <Card
+    title="Database schema"
+    icon="database"
+    href="/database/schema"
+  >
+    Deep dive into the Prisma schema and data relationships
+  </Card>
+  <Card
+    title="Development guide"
+    icon="wrench"
+    href="/development/architecture"
+  >
+    Learn best practices for developing features
+  </Card>
+  <Card
+    title="Troubleshooting"
+    icon="circle-question"
+    href="/development/troubleshooting"
+  >
+    Common issues and solutions for setup and development
+  </Card>
+</CardGroup>

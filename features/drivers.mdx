@@ -1,0 +1,142 @@
+---
+title: Driver standings and management
+description: Track driver performance, view standings, and manage driver profiles in the F1 2023 Championship
+---
+
+## Overview
+
+The Drivers feature allows you to view the complete F1 2023 driver lineup, track their championship standings, and manage driver profiles. Drivers are ranked by total points accumulated across all races in the season.
+
+## Viewing driver standings
+
+The Drivers page displays all F1 drivers in a grid layout, sorted by their championship position based on total points earned.
+
+### Driver information displayed
+
+Each driver card shows:
+
+- **Championship position** - Current ranking in the standings
+- **Total points** - Accumulated points from all races
+- **Driver name** - Given name and family name
+- **Nationality** - Country flag representation
+- **Permanent number** - Unique race number for the driver
+- **Team affiliation** - Current constructor team
+- **Driver photo** - Profile image
+
+<Info>
+Drivers are automatically sorted by total points in descending order, with the championship leader appearing first.
+</Info>
+
+### Driver data structure
+
+The application fetches driver data from the `/api/drivers` endpoint, which includes:
+
+```typescript
+interface Driver {
+  driverId: string;
+  code: string;
+  permanentNumber: number;
+  givenName: string;
+  familyName: string;
+  dateOfBirth: Date;
+  nationality: string;
+  url: string;
+  driverImage: string;
+  teamId: string;
+  team: string;
+  totalPoints: number;
+}
+```
+
+## Driver details
+
+Click on any driver card to navigate to their detailed profile page, which shows:
+
+- Complete driver biography
+- Detailed statistics and performance metrics
+- Race-by-race results and points breakdown
+- Historical data and achievements
+
+## Driver management (Admin only)
+
+<Note>
+Driver management features are only available to authenticated admin users. A valid JWT token with admin privileges is required.
+</Note>
+
+Authenticated admin users see additional management buttons:
+
+<CardGroup cols={3}>
+  <Card title="Create Driver" icon="plus">
+    Add new drivers to the championship with complete profile information
+  </Card>
+  <Card title="Update Driver" icon="pen">
+    Edit existing driver details including team affiliation and profile data
+  </Card>
+  <Card title="Delete Driver" icon="trash">
+    Remove drivers from the championship database
+  </Card>
+</CardGroup>
+
+### Creating a driver
+
+To create a new driver, you must provide:
+
+- **Driver ID** - Unique identifier (e.g., "max_verstappen")
+- **Driver code** - Three-letter abbreviation (e.g., "VER")
+- **Permanent number** - Race number
+- **Given name** and **Family name**
+- **Date of birth**
+- **Nationality**
+- **Profile URL**
+- **Driver image URL**
+- **Team ID** - Associated constructor
+
+<Note>
+The create driver API endpoint validates your JWT token and checks for admin privileges before allowing the operation.
+</Note>
+
+### Points calculation
+
+Driver total points are calculated by:
+
+1. Fetching all race results for each driver
+2. Summing the points from each race finish
+3. Sorting drivers by total points in descending order
+
+The calculation happens server-side in the `/api/drivers` endpoint:
+
+```typescript
+const driversWithTotalPoints = data.map((driver) => ({
+  ...driver,
+  totalPoints: driver.Results.reduce((sum, result) => sum + (result.points || 0), 0),
+}));
+
+driversWithTotalPoints.sort((a, b) => b.totalPoints - a.totalPoints);
+```
+
+## Authentication requirements
+
+<Tabs>
+  <Tab title="Regular users">
+    Regular users can:
+    - View all driver standings
+    - Access driver detail pages
+    - Browse driver statistics
+    - Filter and search drivers
+  </Tab>
+  <Tab title="Admin users">
+    Admin users have full access including:
+    - All regular user capabilities
+    - Create new drivers
+    - Update driver information
+    - Delete drivers from the system
+    - Manage driver-team relationships
+  </Tab>
+</Tabs>
+
+Authentication is managed through JWT tokens stored in localStorage. The application checks for a valid token to display admin management buttons:
+
+```typescript
+const token = localStorage.getItem('token');
+isAuthenticated.value = !!token;
+```

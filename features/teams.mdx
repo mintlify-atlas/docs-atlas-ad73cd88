@@ -1,0 +1,182 @@
+---
+title: Constructor championship and team management
+description: View team standings, manage constructor profiles, and track team performance in the F1 2023 season
+---
+
+## Overview
+
+The Teams feature provides a comprehensive view of all Formula 1 constructors competing in the 2023 championship. Teams are ranked by their total championship points, which is the sum of points earned by both team drivers.
+
+## Viewing team standings
+
+The Teams page displays all F1 constructors in a grid layout, automatically sorted by championship position based on total points.
+
+### Team information displayed
+
+Each team card shows:
+
+- **Championship position** - Current ranking in the constructor standings
+- **Total points** - Combined points from both team drivers
+- **Team name** - Official constructor name
+- **Team logo** - Official team branding
+- **Both drivers** - Photos and names of current team drivers
+- **Team car** - Visual of the current season's car
+
+<Info>
+Team points are calculated by summing all points earned by the team's drivers across all races. Teams are sorted by total points in descending order.
+</Info>
+
+### Team data structure
+
+The application fetches team data from the `/api/teams` endpoint:
+
+```typescript
+interface Team {
+  teamId: string;
+  name: string;
+  nationality: string;
+  url: string;
+  teamLogo: string;
+  Drivers: Driver[];
+  totalPoints: number;
+}
+```
+
+## Supported teams
+
+The 2023 season includes the following constructors:
+
+<CardGroup cols={2}>
+  <Card title="Red Bull Racing" icon="flag-checkered">
+    Championship-winning team with competitive performance
+  </Card>
+  <Card title="Mercedes" icon="flag-checkered">
+    Former champions with strong constructor pedigree
+  </Card>
+  <Card title="Ferrari" icon="flag-checkered">
+    Historic Italian constructor with passionate fanbase
+  </Card>
+  <Card title="McLaren" icon="flag-checkered">
+    British team with rich F1 history
+  </Card>
+  <Card title="Aston Martin" icon="flag-checkered">
+    Competitive midfield team
+  </Card>
+  <Card title="Alpine F1 Team" icon="flag-checkered">
+    French constructor with factory backing
+  </Card>
+  <Card title="Williams" icon="flag-checkered">
+    Historic British team
+  </Card>
+  <Card title="AlphaTauri" icon="flag-checkered">
+    Red Bull junior team
+  </Card>
+  <Card title="Alfa Romeo" icon="flag-checkered">
+    Swiss-based constructor
+  </Card>
+  <Card title="Haas F1 Team" icon="flag-checkered">
+    American constructor team
+  </Card>
+</CardGroup>
+
+## Team details
+
+Click on any team card to navigate to the detailed team profile page, which includes:
+
+- Complete team history and background
+- Current driver lineup with detailed stats
+- Season performance breakdown
+- Points accumulation across races
+- Team achievements and records
+
+### Driver display
+
+Each team card shows up to 2 drivers (the primary team lineup):
+
+```typescript
+<div v-for="(driver, driverIndex) in team.Drivers.slice(0, 2)" :key="driverIndex">
+  <span>{{ driver.givenName }}</span>
+  <span>{{ driver.familyName }}</span>
+  <img :src="driver.driverImage" alt="driver_photo" />
+</div>
+```
+
+## Team management (Admin only)
+
+<Note>
+Team management features require admin authentication. Only users with valid admin JWT tokens can access these capabilities.
+</Note>
+
+Authenticated admin users can perform team management operations:
+
+<CardGroup cols={3}>
+  <Card title="Create Team" icon="plus">
+    Add new constructor teams to the championship
+  </Card>
+  <Card title="Update Team" icon="pen">
+    Modify team information, logos, and details
+  </Card>
+  <Card title="Delete Team" icon="trash">
+    Remove teams from the championship system
+  </Card>
+</CardGroup>
+
+### Creating a team
+
+When creating a new team, provide:
+
+- **Team ID** - Unique identifier (e.g., "red_bull")
+- **Team name** - Official constructor name
+- **Nationality** - Country of registration
+- **Team URL** - Official website or reference link
+- **Team logo URL** - Link to official team logo image
+
+### Team database schema
+
+Teams are stored with the following structure:
+
+```prisma
+model Teams {
+  teamId      String    @id @db.VarChar(50)
+  name        String?   @db.VarChar(100)
+  nationality String?   @db.VarChar(50)
+  url         String?   @db.VarChar(255)
+  teamLogo    String?   @db.VarChar(255)
+  Drivers     Drivers[]
+}
+```
+
+## Points calculation
+
+Constructor championship points are calculated by:
+
+1. Identifying all drivers associated with each team
+2. Fetching race results for each team driver
+3. Summing all points earned by team drivers
+4. Sorting teams by total points
+
+This ensures the constructor standings accurately reflect the combined performance of both team drivers throughout the season.
+
+## Visual elements
+
+The Teams page features rich visual content:
+
+- **Team logos** - Official branding from all 10 constructors
+- **Team cars** - High-quality images of 2023 season cars
+- **Driver photos** - Current team driver lineup
+- **Country flags** - Team nationality representation
+
+<Info>
+All team visuals are sourced from official Formula 1 media assets to ensure authenticity and quality.
+</Info>
+
+## Authentication
+
+The Teams page checks for authentication status:
+
+```typescript
+const token = localStorage.getItem('token');
+isAuthenticated.value = !!token;
+```
+
+Based on authentication status, the interface adapts to show or hide management controls for admin users.

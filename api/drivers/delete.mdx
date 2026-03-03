@@ -1,0 +1,113 @@
+---
+title: Delete driver
+description: Delete a Formula 1 driver from the system (admin only)
+---
+
+Deletes a driver from the system by their driver ID. This endpoint requires admin authentication via JWT token.
+
+## Endpoint
+
+```
+POST /api/drivers/delete
+```
+
+<Note>
+Despite being a POST request, this endpoint performs a delete operation. It's configured this way in the Nitro.js handler.
+</Note>
+
+## Authentication
+
+This endpoint requires admin privileges. Include a valid JWT token in the request body with `userType: "admin"`.
+
+## Request body
+
+<ParamField body="token" type="string" required>
+  JWT authentication token with admin privileges
+</ParamField>
+
+<ParamField body="driverId" type="string" required>
+  Unique identifier of the driver to delete
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="integer" required>
+  HTTP status code
+</ResponseField>
+
+<ResponseField name="body" type="string" required>
+  JSON string containing the deleted driver object or error message
+</ResponseField>
+
+## Error codes
+
+<ResponseField name="200">
+  Driver successfully deleted
+</ResponseField>
+
+<ResponseField name="400">
+  Bad Request - Missing or invalid token
+</ResponseField>
+
+<ResponseField name="401">
+  Unauthorized - Invalid token or token has expired
+</ResponseField>
+
+<ResponseField name="403">
+  Forbidden - User does not have admin privileges
+</ResponseField>
+
+## Example request
+
+```bash
+curl -X POST https://api.example.com/api/drivers/delete \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "driverId": "max_verstappen"
+  }'
+```
+
+## Example response
+
+### Success (200)
+
+```json
+{
+  "status": 200,
+  "body": "{\"driverId\":\"max_verstappen\",\"code\":\"VER\",\"permanentNumber\":1,\"givenName\":\"Max\",\"familyName\":\"Verstappen\",\"dateOfBirth\":\"1997-09-30T00:00:00.000Z\",\"nationality\":\"Dutch\",\"url\":\"http://en.wikipedia.org/wiki/Max_Verstappen\",\"driverImage\":\"https://example.com/images/verstappen.jpg\",\"teamId\":\"red_bull\"}"
+}
+```
+
+### Error - Forbidden (403)
+
+```json
+{
+  "status": 403,
+  "body": "{\"error\":\"Forbidden\"}"
+}
+```
+
+### Error - Unauthorized (401)
+
+```json
+{
+  "status": 401,
+  "body": "{\"error\":\"Token has expired\"}"
+}
+```
+
+### Error - Bad Request (400)
+
+```json
+{
+  "status": 400,
+  "body": "{\"error\":\"Bad Request\"}"
+}
+```
+
+## Important notes
+
+<Warning>
+Deleting a driver may fail if there are related records in other tables (such as Bets or Results) due to foreign key constraints. Ensure all related data is handled appropriately before deletion.
+</Warning>

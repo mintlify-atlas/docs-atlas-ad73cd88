@@ -1,0 +1,169 @@
+---
+title: List drivers
+description: Retrieve all drivers with their team information and total championship points
+---
+
+Retrieves a list of all Formula 1 drivers including their associated team and calculated total points from all race results. The response is automatically sorted by total points in descending order.
+
+## Endpoint
+
+```
+GET /api/drivers
+```
+
+## Response
+
+Returns a success response with an array of driver objects, each including their team name and total points calculated from all race results.
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the request was successful
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A descriptive message about the operation result
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Array of driver objects sorted by total points in descending order
+  
+  <Expandable title="Driver object">
+    <ResponseField name="driverId" type="string" required>
+      Unique identifier for the driver
+    </ResponseField>
+    
+    <ResponseField name="code" type="string">
+      Three-letter driver code (e.g., "VER", "HAM")
+    </ResponseField>
+    
+    <ResponseField name="permanentNumber" type="integer">
+      Driver's permanent racing number
+    </ResponseField>
+    
+    <ResponseField name="givenName" type="string">
+      Driver's first name
+    </ResponseField>
+    
+    <ResponseField name="familyName" type="string">
+      Driver's last name
+    </ResponseField>
+    
+    <ResponseField name="dateOfBirth" type="string">
+      Driver's date of birth in ISO 8601 format
+    </ResponseField>
+    
+    <ResponseField name="nationality" type="string">
+      Driver's nationality
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      URL to driver's profile or additional information
+    </ResponseField>
+    
+    <ResponseField name="driverImage" type="string">
+      URL to the driver's image
+    </ResponseField>
+    
+    <ResponseField name="teamId" type="string">
+      ID of the team the driver belongs to
+    </ResponseField>
+    
+    <ResponseField name="team" type="string">
+      Name of the team the driver belongs to
+    </ResponseField>
+    
+    <ResponseField name="Teams" type="object">
+      Team information object
+      
+      <Expandable title="Teams object">
+        <ResponseField name="name" type="string">
+          Team name
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="Results" type="array">
+      Array of race result objects for the driver
+      
+      <Expandable title="Result object">
+        <ResponseField name="points" type="integer">
+          Points earned in a specific race
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="totalPoints" type="integer" required>
+      Total championship points calculated from all race results. This is computed by summing all points from the Results array.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Points calculation logic
+
+The `totalPoints` field is calculated using the following logic:
+
+```javascript
+driver.Results.reduce((sum, result) => sum + (result.points || 0), 0)
+```
+
+This sums all points from each race result, treating null or undefined values as 0.
+
+## Example request
+
+```bash
+curl -X GET https://api.example.com/api/drivers
+```
+
+## Example response
+
+```json
+{
+  "success": true,
+  "message": "Successfully fetched drivers with total points and sorted by total points",
+  "data": [
+    {
+      "driverId": "max_verstappen",
+      "code": "VER",
+      "permanentNumber": 1,
+      "givenName": "Max",
+      "familyName": "Verstappen",
+      "dateOfBirth": "1997-09-30T00:00:00.000Z",
+      "nationality": "Dutch",
+      "url": "http://en.wikipedia.org/wiki/Max_Verstappen",
+      "driverImage": "https://example.com/images/verstappen.jpg",
+      "teamId": "red_bull",
+      "team": "Red Bull Racing",
+      "Teams": {
+        "name": "Red Bull Racing"
+      },
+      "Results": [
+        { "points": 25 },
+        { "points": 18 },
+        { "points": 25 }
+      ],
+      "totalPoints": 68
+    },
+    {
+      "driverId": "lewis_hamilton",
+      "code": "HAM",
+      "permanentNumber": 44,
+      "givenName": "Lewis",
+      "familyName": "Hamilton",
+      "dateOfBirth": "1985-01-07T00:00:00.000Z",
+      "nationality": "British",
+      "url": "http://en.wikipedia.org/wiki/Lewis_Hamilton",
+      "driverImage": "https://example.com/images/hamilton.jpg",
+      "teamId": "mercedes",
+      "team": "Mercedes",
+      "Teams": {
+        "name": "Mercedes"
+      },
+      "Results": [
+        { "points": 18 },
+        { "points": 15 },
+        { "points": 12 }
+      ],
+      "totalPoints": 45
+    }
+  ]
+}
+```

@@ -1,0 +1,148 @@
+---
+title: Create driver
+description: Create a new Formula 1 driver (admin only)
+---
+
+Creates a new driver in the system. This endpoint requires admin authentication via JWT token.
+
+## Endpoint
+
+```
+POST /api/drivers/create
+```
+
+## Authentication
+
+This endpoint requires admin privileges. Include a valid JWT token in the request body with `userType: "admin"`.
+
+## Request body
+
+<ParamField body="token" type="string" required>
+  JWT authentication token with admin privileges
+</ParamField>
+
+<ParamField body="driverId" type="string" required>
+  Unique identifier for the driver (e.g., "max_verstappen")
+</ParamField>
+
+<ParamField body="code" type="string">
+  Three-letter driver code (e.g., "VER")
+</ParamField>
+
+<ParamField body="permanentNumber" type="integer">
+  Driver's permanent racing number
+</ParamField>
+
+<ParamField body="givenName" type="string">
+  Driver's first name
+</ParamField>
+
+<ParamField body="familyName" type="string">
+  Driver's last name
+</ParamField>
+
+<ParamField body="dateOfBirth" type="string">
+  Driver's date of birth in ISO 8601 format
+</ParamField>
+
+<ParamField body="nationality" type="string">
+  Driver's nationality
+</ParamField>
+
+<ParamField body="url" type="string">
+  URL to driver's profile or additional information
+</ParamField>
+
+<ParamField body="driverImage" type="string">
+  URL to the driver's image
+</ParamField>
+
+<ParamField body="teamId" type="string">
+  ID of the team the driver belongs to
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="integer" required>
+  HTTP status code
+</ResponseField>
+
+<ResponseField name="body" type="string" required>
+  JSON string containing the created driver object or error message
+</ResponseField>
+
+## Error codes
+
+<ResponseField name="200">
+  Driver successfully created
+</ResponseField>
+
+<ResponseField name="400">
+  Bad Request - Missing or invalid token
+</ResponseField>
+
+<ResponseField name="401">
+  Unauthorized - Invalid token or token has expired
+</ResponseField>
+
+<ResponseField name="403">
+  Forbidden - User does not have admin privileges
+</ResponseField>
+
+## Example request
+
+```bash
+curl -X POST https://api.example.com/api/drivers/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "driverId": "max_verstappen",
+    "code": "VER",
+    "permanentNumber": 1,
+    "givenName": "Max",
+    "familyName": "Verstappen",
+    "dateOfBirth": "1997-09-30",
+    "nationality": "Dutch",
+    "url": "http://en.wikipedia.org/wiki/Max_Verstappen",
+    "driverImage": "https://example.com/images/verstappen.jpg",
+    "teamId": "red_bull"
+  }'
+```
+
+## Example response
+
+### Success (200)
+
+```json
+{
+  "status": 200,
+  "body": "{\"driverId\":\"max_verstappen\",\"code\":\"VER\",\"permanentNumber\":1,\"givenName\":\"Max\",\"familyName\":\"Verstappen\",\"dateOfBirth\":\"1997-09-30T00:00:00.000Z\",\"nationality\":\"Dutch\",\"url\":\"http://en.wikipedia.org/wiki/Max_Verstappen\",\"driverImage\":\"https://example.com/images/verstappen.jpg\",\"teamId\":\"red_bull\"}"
+}
+```
+
+### Error - Forbidden (403)
+
+```json
+{
+  "status": 403,
+  "body": "{\"error\":\"Forbidden\"}"
+}
+```
+
+### Error - Unauthorized (401)
+
+```json
+{
+  "status": 401,
+  "body": "{\"error\":\"Token has expired\"}"
+}
+```
+
+### Error - Bad Request (400)
+
+```json
+{
+  "status": 400,
+  "body": "{\"error\":\"Bad Request\"}"
+}
+```

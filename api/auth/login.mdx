@@ -1,0 +1,130 @@
+---
+title: "Login user"
+description: "Authenticate a user and receive a JWT token for accessing protected endpoints"
+---
+
+## Endpoint
+
+```
+POST /api/user/login
+```
+
+Authenticates a user with their username and password. Returns a JWT token that can be used to authenticate subsequent API requests. Tokens are valid for 1 hour.
+
+## Request body
+
+<ParamField body="username" type="string" required>
+  The user's username
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The user's password (will be compared against the bcrypt hash)
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="number">
+  HTTP status code (200 for success, 401 for authentication failure)
+</ResponseField>
+
+<ResponseField name="body" type="string">
+  JSON stringified response object
+</ResponseField>
+
+### Success response object
+
+<Expandable title="Success response properties">
+  <ResponseField name="message" type="string">
+    Success message ("Login successful")
+  </ResponseField>
+
+  <ResponseField name="token" type="string">
+    JWT authentication token valid for 1 hour. Contains userId, username, and userType in the payload.
+  </ResponseField>
+
+  <ResponseField name="user" type="string">
+    The authenticated user's username
+  </ResponseField>
+
+  <ResponseField name="userType" type="string">
+    The user's account type (e.g., "regular", "admin")
+  </ResponseField>
+</Expandable>
+
+## Example request
+
+```bash cURL
+curl -X POST https://api.f1pitlane.com/api/user/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "racing_fan_123",
+    "password": "SecureP@ssw0rd"
+  }'
+```
+
+## Example success response
+
+```json
+{
+  "status": 200,
+  "body": "{\"message\":\"Login successful\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQyLCJ1c2VybmFtZSI6InJhY2luZ19mYW5fMTIzIiwidXNlclR5cGUiOiJyZWd1bGFyIiwiaWF0IjoxNzA5NDY0MjAwLCJleHAiOjE3MDk0Njc4MDB9.x8YXC8GW3rcZ8YXCGW3rc8YXC8GW3rc8YXCGW3rc\",\"user\":\"racing_fan_123\",\"userType\":\"regular\"}"
+}
+```
+
+## Error responses
+
+### User not found
+
+Returned when no user exists with the provided username.
+
+```json
+{
+  "status": 401,
+  "body": "{\"message\":\"User not found\"}"
+}
+```
+
+### Invalid password
+
+Returned when the password does not match the stored hash.
+
+```json
+{
+  "status": 401,
+  "body": "{\"message\":\"Invalid password\"}"
+}
+```
+
+## Authentication flow
+
+1. Client sends username and password to `/api/user/login`
+2. Server looks up user by username in the database (source: `server/api/user/login.ts:16-18`)
+3. If user not found, returns 401 error
+4. Server compares provided password with stored bcrypt hash (source: `server/api/user/login.ts:27`)
+5. If password invalid, returns 401 error
+6. Server generates JWT token with user data (source: `server/api/user/login.ts:36`)
+7. Token contains: `userId`, `username`, `userType` and expires in 1 hour
+8. Client receives token and should include it in subsequent API requests
+
+## Using the JWT token
+
+After successful login, include the JWT token in the `Authorization` header for protected endpoints:
+
+```bash
+curl -X GET https://api.f1pitlane.com/api/protected-endpoint \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+```
+
+## Token details
+
+- **Signing algorithm**: HS256 (HMAC with SHA-256)
+- **Expiration**: 1 hour from issue time
+- **Payload includes**: userId, username, userType
+- **Implementation**: Source code at `server/api/user/login.ts:35-36`
+
+## Security notes
+
+- Passwords are never returned in responses
+- Password verification uses bcrypt's constant-time comparison
+- Failed login attempts return generic 401 errors to prevent username enumeration
+- Tokens expire after 1 hour and must be refreshed

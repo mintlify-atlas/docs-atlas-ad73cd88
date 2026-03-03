@@ -1,0 +1,121 @@
+---
+title: List results
+description: Retrieve all race results from the database
+---
+
+## Endpoint
+
+<ParamField path="method" type="string" default="GET">
+  GET
+</ParamField>
+
+<ParamField path="path" type="string">
+  `/api/results`
+</ParamField>
+
+## Description
+
+Retrieves all race results from the database. Each result contains information about a driver's position and points earned in a specific race.
+
+## Request
+
+This endpoint does not require any parameters or request body.
+
+### Headers
+
+No authentication or special headers required.
+
+## Response
+
+<ResponseField name="data" type="array">
+  Array of result objects
+  
+  <Expandable title="Result object">
+    <ResponseField name="resultId" type="number">
+      Unique identifier for the result (auto-incremented)
+    </ResponseField>
+    
+    <ResponseField name="raceId" type="number">
+      ID of the race this result belongs to
+    </ResponseField>
+    
+    <ResponseField name="driverId" type="string">
+      ID of the driver who achieved this result
+    </ResponseField>
+    
+    <ResponseField name="position" type="number" required>
+      The finishing position of the driver in the race
+    </ResponseField>
+    
+    <ResponseField name="points" type="number" required>
+      The championship points earned by the driver for this position
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Success response
+
+```json
+{
+  "data": [
+    {
+      "resultId": 1,
+      "raceId": 1100,
+      "driverId": "max_verstappen",
+      "position": 1,
+      "points": 25
+    },
+    {
+      "resultId": 2,
+      "raceId": 1100,
+      "driverId": "perez",
+      "position": 2,
+      "points": 18
+    },
+    {
+      "resultId": 3,
+      "raceId": 1100,
+      "driverId": "hamilton",
+      "position": 3,
+      "points": 15
+    }
+  ]
+}
+```
+
+## Example request
+
+```bash
+curl -X GET https://api.example.com/api/results
+```
+
+## Error responses
+
+### 500 Internal Server Error
+
+Returned when there is a database connection error or unexpected server issue.
+
+```json
+{
+  "statusCode": 500,
+  "statusMessage": "Internal Server Error"
+}
+```
+
+## Implementation details
+
+- Built with Nitro.js event handler
+- Uses Prisma ORM to query the PostgreSQL database
+- Returns all results without pagination
+- No filtering or sorting applied by default
+- Relations to `Drivers` and `Races` tables are available in the database schema but not populated in the response
+
+## Database schema
+
+The Results table has the following structure:
+
+- `resultId`: Primary key (auto-increment)
+- `raceId`: Foreign key to Races table (nullable)
+- `driverId`: Foreign key to Drivers table (nullable, VARCHAR 50)
+- `position`: Integer (required)
+- `points`: Integer (required)

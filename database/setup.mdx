@@ -1,0 +1,353 @@
+---
+title: Database setup
+description: Configure PostgreSQL database, run migrations, and seed data for F1 PitLane Predict
+---
+
+This guide walks you through setting up the PostgreSQL database for F1 PitLane Predict using Prisma ORM.
+
+## Prerequisites
+
+<Note>
+  Ensure you have PostgreSQL installed and running on your system before proceeding.
+</Note>
+
+You'll need:
+- PostgreSQL 12 or higher
+- Node.js 18 or higher
+- Prisma CLI (installed as dev dependency)
+
+## Database configuration
+
+### Environment variables
+
+The application uses the `DATABASE_URL` environment variable to connect to PostgreSQL. Create a `.env` file in your project root:
+
+```bash .env
+DATABASE_URL="postgresql://username:password@localhost:5432/f1_pitlane_predict?schema=public"
+```
+
+<Accordion title="Connection string format">
+  The PostgreSQL connection string follows this format:
+  
+  ```
+  postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=SCHEMA
+  ```
+  
+  **Parameters:**
+  - `USER` - PostgreSQL username
+  - `PASSWORD` - User password
+  - `HOST` - Database server hostname (e.g., `localhost`)
+  - `PORT` - PostgreSQL port (default: `5432`)
+  - `DATABASE` - Database name
+  - `schema` - PostgreSQL schema (usually `public`)
+</Accordion>
+
+### Connection string examples
+
+<CodeGroup>
+```bash Local development
+DATABASE_URL="postgresql://postgres:mypassword@localhost:5432/f1_pitlane_predict?schema=public"
+```
+
+```bash Docker container
+DATABASE_URL="postgresql://postgres:postgres@db:5432/f1_pitlane_predict?schema=public"
+```
+
+```bash Cloud provider (example)
+DATABASE_URL="postgresql://user:password@your-db.cloud.provider.com:5432/f1_pitlane_predict?schema=public&sslmode=require"
+```
+</CodeGroup>
+
+<Note>
+  Never commit your `.env` file to version control. Add it to your `.gitignore` file to keep credentials secure.
+</Note>
+
+## Creating the database
+
+### Using PostgreSQL CLI
+
+Connect to PostgreSQL and create the database:
+
+```bash
+psql -U postgres
+```
+
+```sql
+CREATE DATABASE f1_pitlane_predict;
+```
+
+### Using Docker
+
+Alternatively, run PostgreSQL in a Docker container:
+
+```bash
+docker run --name f1-postgres \
+  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_DB=f1_pitlane_predict \
+  -p 5432:5432 \
+  -d postgres:16
+```
+
+## Installing Prisma
+
+Prisma is included in the project dependencies. Install all dependencies:
+
+```bash
+npm install
+```
+
+This installs:
+- `@prisma/client` (v5.7.0) - Prisma Client for database queries
+- `prisma` (v5.7.0) - Prisma CLI for migrations and schema management
+
+## Running migrations
+
+### Generate Prisma Client
+
+First, generate the Prisma Client based on your schema:
+
+```bash
+npx prisma generate
+```
+
+This creates the type-safe Prisma Client in `node_modules/@prisma/client`.
+
+### Create and apply migrations
+
+<Accordion title="Development workflow">
+  During development, use `prisma migrate dev` to create and apply migrations:
+  
+  ```bash
+  npx prisma migrate dev --name init
+  ```
+  
+  This command:
+  1. Creates a new migration in `prisma/migrations/`
+  2. Applies the migration to your database
+  3. Generates Prisma Client
+  4. Prompts you to reset the database if needed
+</Accordion>
+
+<Accordion title="Production deployment">
+  In production, use `prisma migrate deploy` to apply existing migrations:
+  
+  ```bash
+  npx prisma migrate deploy
+  ```
+  
+  This applies all pending migrations without creating new ones or resetting the database.
+</Accordion>
+
+### Migration commands
+
+<CodeGroup>
+```bash Create migration
+npx prisma migrate dev --name your_migration_name
+```
+
+```bash Apply migrations (production)
+npx prisma migrate deploy
+```
+
+```bash Reset database
+npx prisma migrate reset
+```
+
+```bash Check migration status
+npx prisma migrate status
+```
+</CodeGroup>
+
+<Note>
+  The Bets and Users models contain check constraints that require additional setup. Prisma will guide you through this during migration. See the [Prisma check constraints documentation](https://pris.ly/d/check-constraints) for details.
+</Note>
+
+## Database seeding
+
+While the project doesn't include a seed file by default, you can create one to populate initial data.
+
+### Create seed file
+
+Create `prisma/seed.ts` in your project:
+
+```typescript prisma/seed.ts
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  // Seed Teams
+  const redBull = await prisma.teams.create({
+    data: {
+      teamId: 'red_bull',
+      name: 'Red Bull Racing',
+      nationality: 'Austrian',
+      url: 'http://www.redbullracing.com/',
+      teamLogo: '/logos/red_bull.png'
+    }
+  })
+
+  // Seed Drivers
+  await prisma.drivers.create({
+    data: {
+      driverId: 'max_verstappen',
+      code: 'VER',
+      permanentNumber: 1,
+      givenName: 'Max',
+      familyName: 'Verstappen',
+      dateOfBirth: new Date('1997-09-30'),
+      nationality: 'Dutch',
+      url: 'http://en.wikipedia.org/wiki/Max_Verstappen',
+      driverImage: '/drivers/verstappen.png',
+      teamId: redBull.teamId
+    }
+  })
+
+  // Add more seed data as needed
+  console.log('Database seeded successfully')
+}
+
+main()
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
+```
+
+### Configure package.json
+
+Add the seed command to your `package.json`:
+
+```json package.json
+{
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+}
+```
+
+### Run seed
+
+```bash
+npx prisma db seed
+```
+
+<Note>
+  Seeding runs automatically when you use `prisma migrate reset` or `prisma migrate dev`.
+</Note>
+
+## Prisma Studio
+
+Prisma Studio provides a visual interface to view and edit your database:
+
+```bash
+npx prisma studio
+```
+
+This opens a browser window at `http://localhost:5555` where you can:
+- Browse all tables and records
+- Edit data directly
+- Filter and search records
+- View relationships between models
+
+## Using Prisma Client
+
+After setup, use Prisma Client in your application:
+
+```typescript
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+// Query users
+const users = await prisma.users.findMany()
+
+// Create a bet
+const bet = await prisma.bets.create({
+  data: {
+    userId: 1,
+    raceId: 1,
+    driverId: 'max_verstappen',
+    amount: 10.00,
+    odds: 1.85,
+    betStatus: 'pending'
+  }
+})
+
+// Get race with results
+const race = await prisma.races.findUnique({
+  where: { raceId: 1 },
+  include: {
+    Results: {
+      include: {
+        Drivers: true
+      }
+    }
+  }
+})
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection refused">
+    If you see "connection refused" errors:
+    
+    1. Verify PostgreSQL is running: `sudo service postgresql status`
+    2. Check the connection string in `.env`
+    3. Ensure PostgreSQL is listening on the correct port
+    4. Verify firewall settings aren't blocking connections
+  </Accordion>
+
+  <Accordion title="Authentication failed">
+    If authentication fails:
+    
+    1. Verify username and password in `DATABASE_URL`
+    2. Check PostgreSQL user permissions
+    3. Ensure the database exists: `psql -l`
+    4. Try connecting manually: `psql -U username -d database_name`
+  </Accordion>
+
+  <Accordion title="Migration conflicts">
+    If migrations conflict or fail:
+    
+    1. Check migration status: `npx prisma migrate status`
+    2. Resolve conflicts manually or reset: `npx prisma migrate reset`
+    3. Review `prisma/migrations/` directory for issues
+    4. In production, never use `migrate reset` - always use `migrate deploy`
+  </Accordion>
+
+  <Accordion title="Prisma Client out of sync">
+    If Prisma Client doesn't match your schema:
+    
+    1. Regenerate the client: `npx prisma generate`
+    2. Restart your development server
+    3. Clear node_modules and reinstall if issues persist
+  </Accordion>
+</AccordionGroup>
+
+## Best practices
+
+<Note>
+  Follow these practices for a smooth database workflow:
+</Note>
+
+- **Always backup** your database before running migrations in production
+- **Use migrations** instead of `prisma db push` for production environments
+- **Version control** your migration files in `prisma/migrations/`
+- **Test migrations** in a staging environment before production
+- **Use connection pooling** for production deployments (e.g., PgBouncer)
+- **Monitor queries** in production using Prisma's query logging
+- **Set appropriate timeouts** for database connections
+
+## Next steps
+
+Now that your database is set up:
+
+1. Review the [database schema](/database/schema) to understand all models and relationships
+2. Implement API endpoints using Prisma Client
+3. Add data validation and error handling
+4. Set up database backups and monitoring

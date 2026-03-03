@@ -1,0 +1,296 @@
+---
+title: Database schema
+description: Complete documentation of the F1 PitLane Predict PostgreSQL database schema with all models, fields, and relationships
+---
+
+The F1 PitLane Predict application uses a PostgreSQL database managed through Prisma ORM. The schema is defined in `prisma/schema.prisma` and consists of six main models that handle users, F1 data, and betting functionality.
+
+## Overview
+
+The database schema includes:
+
+- **Users** - User accounts and authentication
+- **Drivers** - F1 driver information
+- **Teams** - F1 constructor/team data
+- **Races** - Race schedule and circuit information
+- **Results** - Race results and driver positions
+- **Bets** - User betting records and status
+
+## Models
+
+### Users
+
+Stores user account information, authentication credentials, and balance data.
+
+```prisma
+model Users {
+  userId    Int       @id @default(autoincrement())
+  username  String    @unique @db.VarChar(255)
+  email     String    @unique @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  balance   Decimal?  @default(0.00) @db.Decimal(10, 2)
+  createdAt DateTime? @default(now()) @db.Timestamp(6)
+  lastLogin DateTime? @db.Timestamptz(6)
+  country   String?   @db.VarChar(50)
+  userType  String?   @default("regular") @db.VarChar(10)
+  Bets      Bets[]
+}
+```
+
+<Accordion title="Field descriptions">
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `userId` | Int | Primary key, auto-incrementing user identifier |
+  | `username` | String | Unique username, max 255 characters |
+  | `email` | String | Unique email address, max 255 characters |
+  | `password` | String | Hashed password, max 255 characters |
+  | `balance` | Decimal | User's account balance for betting, defaults to 0.00 |
+  | `createdAt` | DateTime | Account creation timestamp |
+  | `lastLogin` | DateTime | Last login timestamp with timezone |
+  | `country` | String | User's country, max 50 characters |
+  | `userType` | String | User type (e.g., "regular"), defaults to "regular" |
+</Accordion>
+
+<Note>
+  This table contains check constraints and requires additional setup for migrations. See the [Prisma documentation](https://pris.ly/d/check-constraints) for more information.
+</Note>
+
+**Relationships:**
+- One-to-many with Bets (a user can have multiple bets)
+
+### Drivers
+
+Contains comprehensive information about F1 drivers including personal details and team affiliation.
+
+```prisma
+model Drivers {
+  driverId        String    @id @db.VarChar(50)
+  code            String?   @db.VarChar(10)
+  permanentNumber Int?
+  givenName       String?   @db.VarChar(100)
+  familyName      String?   @db.VarChar(100)
+  dateOfBirth     DateTime? @db.Date
+  nationality     String?   @db.VarChar(50)
+  url             String?   @db.VarChar(255)
+  driverImage     String?   @db.VarChar(255)
+  teamId          String?   @db.VarChar(50)
+  Bets            Bets[]
+  Teams           Teams?    @relation(fields: [teamId], references: [teamId], onDelete: NoAction, onUpdate: NoAction)
+  Results         Results[]
+}
+```
+
+<Accordion title="Field descriptions">
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `driverId` | String | Primary key, unique driver identifier (max 50 chars) |
+  | `code` | String | Driver's three-letter code (e.g., "VER", "HAM") |
+  | `permanentNumber` | Int | Driver's permanent racing number |
+  | `givenName` | String | Driver's first name |
+  | `familyName` | String | Driver's last name |
+  | `dateOfBirth` | DateTime | Driver's date of birth |
+  | `nationality` | String | Driver's nationality |
+  | `url` | String | Reference URL for driver information |
+  | `driverImage` | String | URL or path to driver's image |
+  | `teamId` | String | Foreign key to Teams table |
+</Accordion>
+
+**Relationships:**
+- Many-to-one with Teams (a driver belongs to one team)
+- One-to-many with Bets (a driver can have multiple bets placed on them)
+- One-to-many with Results (a driver can have multiple race results)
+
+### Teams
+
+Stores F1 constructor/team information.
+
+```prisma
+model Teams {
+  teamId      String    @id @db.VarChar(50)
+  name        String?   @db.VarChar(100)
+  nationality String?   @db.VarChar(50)
+  url         String?   @db.VarChar(255)
+  teamLogo    String?   @db.VarChar(255)
+  Drivers     Drivers[]
+}
+```
+
+<Accordion title="Field descriptions">
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `teamId` | String | Primary key, unique team identifier (max 50 chars) |
+  | `name` | String | Team/constructor name (e.g., "Red Bull Racing") |
+  | `nationality` | String | Team's nationality |
+  | `url` | String | Reference URL for team information |
+  | `teamLogo` | String | URL or path to team's logo image |
+</Accordion>
+
+**Relationships:**
+- One-to-many with Drivers (a team can have multiple drivers)
+
+### Races
+
+Contains race schedule, circuit information, and event details.
+
+```prisma
+model Races {
+  raceId      Int       @id @default(autoincrement())
+  season      String?   @db.VarChar(4)
+  round       Int?
+  raceName    String?   @db.VarChar(255)
+  circuitId   String?   @db.VarChar(255)
+  circuitName String?   @db.VarChar(255)
+  locality    String?   @db.VarChar(255)
+  country     String?   @db.VarChar(255)
+  date        DateTime? @db.Date
+  time        DateTime? @db.Time(6)
+  url         String?   @db.VarChar(255)
+  Bets        Bets[]
+  Results     Results[]
+}
+```
+
+<Accordion title="Field descriptions">
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `raceId` | Int | Primary key, auto-incrementing race identifier |
+  | `season` | String | Season year (e.g., "2024") |
+  | `round` | Int | Round number in the season |
+  | `raceName` | String | Official race name |
+  | `circuitId` | String | Unique circuit identifier |
+  | `circuitName` | String | Circuit name |
+  | `locality` | String | City or locality of the circuit |
+  | `country` | String | Country where the race takes place |
+  | `date` | DateTime | Race date |
+  | `time` | DateTime | Race start time |
+  | `url` | String | Reference URL for race information |
+</Accordion>
+
+**Relationships:**
+- One-to-many with Bets (a race can have multiple bets)
+- One-to-many with Results (a race has multiple driver results)
+
+### Results
+
+Stores race results including driver positions and points earned.
+
+```prisma
+model Results {
+  resultId Int      @id @default(autoincrement())
+  raceId   Int?
+  driverId String?  @db.VarChar(50)
+  position Int
+  points   Int
+  Drivers  Drivers? @relation(fields: [driverId], references: [driverId], onDelete: NoAction, onUpdate: NoAction)
+  Races    Races?   @relation(fields: [raceId], references: [raceId], onDelete: NoAction, onUpdate: NoAction)
+}
+```
+
+<Accordion title="Field descriptions">
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `resultId` | Int | Primary key, auto-incrementing result identifier |
+  | `raceId` | Int | Foreign key to Races table |
+  | `driverId` | String | Foreign key to Drivers table |
+  | `position` | Int | Finishing position in the race |
+  | `points` | Int | Championship points earned |
+</Accordion>
+
+**Relationships:**
+- Many-to-one with Races (a result belongs to one race)
+- Many-to-one with Drivers (a result belongs to one driver)
+
+### Bets
+
+Tracks user betting activity including bet amounts, odds, and status.
+
+```prisma
+model Bets {
+  betId     Int       @id @default(autoincrement())
+  userId    Int?
+  raceId    Int?
+  driverId  String?   @db.VarChar(50)
+  amount    Decimal   @db.Decimal(10, 2)
+  odds      Decimal   @db.Decimal(5, 2)
+  betStatus String?   @default("pending") @db.VarChar(10)
+  createdAt DateTime? @default(now()) @db.Timestamp(6)
+  Drivers   Drivers?  @relation(fields: [driverId], references: [driverId], onDelete: NoAction, onUpdate: NoAction)
+  Races     Races?    @relation(fields: [raceId], references: [raceId], onDelete: NoAction, onUpdate: NoAction)
+  Users     Users?    @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+}
+```
+
+<Accordion title="Field descriptions">
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `betId` | Int | Primary key, auto-incrementing bet identifier |
+  | `userId` | Int | Foreign key to Users table |
+  | `raceId` | Int | Foreign key to Races table |
+  | `driverId` | String | Foreign key to Drivers table |
+  | `amount` | Decimal | Bet amount with 2 decimal places |
+  | `odds` | Decimal | Betting odds with 2 decimal places |
+  | `betStatus` | String | Status of bet ("pending", "won", "lost"), defaults to "pending" |
+  | `createdAt` | DateTime | Timestamp when bet was created |
+</Accordion>
+
+<Note>
+  This table contains check constraints and requires additional setup for migrations. See the [Prisma documentation](https://pris.ly/d/check-constraints) for more information.
+</Note>
+
+**Relationships:**
+- Many-to-one with Users (a bet belongs to one user)
+- Many-to-one with Races (a bet is for one race)
+- Many-to-one with Drivers (a bet is on one driver)
+
+## Database configuration
+
+The database uses PostgreSQL as the provider and connects using the `DATABASE_URL` environment variable:
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+## Entity relationship diagram
+
+```
+Users (1) ────── (*) Bets (*) ────── (1) Races
+                       │
+                       │
+                      (*)
+                       │
+                       │
+                   Drivers (1) ────── (*) Results (*) ────── (1) Races
+                       │
+                      (*)
+                       │
+                       │
+                   (1) Teams
+```
+
+## Key features
+
+<AccordionGroup>
+  <Accordion title="Foreign key relationships">
+    All foreign key relationships use `onDelete: NoAction` and `onUpdate: NoAction` to prevent cascading deletes and updates. This ensures data integrity and prevents accidental data loss.
+  </Accordion>
+
+  <Accordion title="Auto-incrementing IDs">
+    Most tables (Users, Races, Results, Bets) use auto-incrementing integer primary keys. Drivers and Teams use string-based identifiers for compatibility with external F1 data sources.
+  </Accordion>
+
+  <Accordion title="Decimal precision">
+    Financial fields (balance, amount, odds) use appropriate decimal precision:
+    - Balance and amounts: `Decimal(10, 2)` for currency values
+    - Odds: `Decimal(5, 2)` for betting odds
+  </Accordion>
+
+  <Accordion title="Timestamps">
+    The schema uses various timestamp types:
+    - `@default(now())` for automatic creation timestamps
+    - `Timestamp(6)` for standard timestamps
+    - `Timestamptz(6)` for timezone-aware timestamps (lastLogin)
+  </Accordion>
+</AccordionGroup>

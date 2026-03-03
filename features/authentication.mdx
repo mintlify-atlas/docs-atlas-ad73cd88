@@ -1,0 +1,301 @@
+---
+title: User authentication system
+description: Secure login, registration, and role-based access control for F1 PitLane Predict
+---
+
+## Overview
+
+F1 PitLane Predict uses a JWT-based authentication system to secure user accounts and control access to administrative features. The system supports two user types: regular users and admin users.
+
+## User registration
+
+New users can create an account through the registration form.
+
+### Registration workflow
+
+1. Navigate to the Register page
+2. Provide required account information:
+   - **Username** - Unique identifier for the account
+   - **Email** - Valid email address
+   - **Password** - Secure password
+3. Submit the registration form
+4. Receive confirmation upon successful registration
+
+<Info>
+Usernames and email addresses must be unique. The system will reject registration attempts with duplicate credentials.
+</Info>
+
+### Registration form
+
+The registration component collects user information:
+
+```vue
+<form @submit.prevent="register">
+  <label for="username">Username:</label>
+  <input v-model="username" type="text" id="username" required />
+
+  <label for="email">Email:</label>
+  <input v-model="email" type="email" id="email" required />
+
+  <label for="password">Password:</label>
+  <input v-model="password" type="password" id="password" required />
+
+  <button type="submit">Register</button>
+</form>
+```
+
+### Registration API
+
+Registration data is sent to the `/api/user/register` endpoint:
+
+```typescript
+await axios.post("http://localhost:3000/api/user/register", {
+  email: email.value,
+  password: password.value,
+  username: username.value,
+});
+```
+
+Passwords are hashed using bcrypt before storage for security.
+
+## User login
+
+Existing users authenticate through the login form.
+
+### Login workflow
+
+1. Navigate to the Login page
+2. Enter your credentials:
+   - **Username**
+   - **Password**
+3. Submit the login form
+4. Receive a JWT token upon successful authentication
+5. Token is stored in localStorage for subsequent requests
+
+<Note>
+The login button is disabled if you're already authenticated. Log out first to switch accounts.
+</Note>
+
+### Login form
+
+The login component handles authentication:
+
+```vue
+<form @submit.prevent="login">
+  <label for="username">Username:</label>
+  <input type="text" id="username" v-model="username" required />
+
+  <label for="password">Password:</label>
+  <input type="password" id="password" v-model="password" required />
+
+  <button type="submit" :disabled="isAuthenticated">
+    {{ isAuthenticated ? "Already logged in" : "Login" }}
+  </button>
+</form>
+```
+
+### Login API
+
+Credentials are verified against the `/api/user/login` endpoint:
+
+```typescript
+const response = await axios.post("http://localhost:3000/api/user/login", {
+  username: username.value,
+  password: password.value,
+});
+```
+
+The server validates credentials and returns a JWT token if authentication succeeds.
+
+## JWT token management
+
+### Token structure
+
+Successful login returns a JWT token containing:
+
+- **User ID** - Unique user identifier
+- **Username** - Account username
+- **User type** - Role ("regular" or "admin")
+- **Expiration** - Token validity period (1 hour)
+
+```typescript
+const token = jwt.sign(
+  { 
+    userId: users.userId, 
+    username: users.username, 
+    userType: users.userType 
+  }, 
+  secretKey, 
+  { expiresIn: '1h' }
+);
+```
+
+### Token storage
+
+Tokens are stored in browser localStorage:
+
+```typescript
+const responseBody = JSON.parse(response.data.body);
+localStorage.setItem('token', responseBody.token);
+```
+
+### Token verification
+
+The application checks authentication status on page load:
+
+```typescript
+const token = localStorage.getItem('token');
+isAuthenticated.value = !!token;
+```
+
+## User types and roles
+
+<Tabs>
+  <Tab title="Regular users">
+    **Capabilities:**
+    - View driver standings
+    - Browse team information
+    - Check race schedules
+    - See race results
+    - Access driver and team details
+    - Navigate through all public pages
+    
+    **Restrictions:**
+    - Cannot create, update, or delete drivers
+    - Cannot modify team information
+    - Cannot manage race calendar
+    - No access to admin controls
+  </Tab>
+  <Tab title="Admin users">
+    **All regular user capabilities, plus:**
+    - Create new drivers
+    - Update driver information
+    - Delete drivers from the system
+    - Create new teams
+    - Modify team details
+    - Delete teams
+    - Add races to the calendar
+    - Update race information
+    - Remove races from the schedule
+    - Full database management access
+  </Tab>
+</Tabs>
+
+## Role-based access control
+
+Admin operations require JWT token validation:
+
+```typescript
+const secretKey = 'Z8YXC8GW!3rc';
+const decoded = jwt.verify(token, secretKey);
+
+if (decoded.userType === 'admin') {
+  // Allow admin operation
+} else {
+  return {
+    status: 403,
+    body: JSON.stringify({ error: 'Forbidden' }),
+  };
+}
+```
+
+### Token expiration
+
+The system checks token expiration before processing requests:
+
+```typescript
+const currentTimestamp = Math.floor(Date.now() / 1000);
+if (decoded.exp && decoded.exp < currentTimestamp) {
+  return {
+    status: 401,
+    body: JSON.stringify({ error: 'Token has expired' }),
+  };
+}
+```
+
+<Note>
+Tokens expire after 1 hour. You'll need to log in again to refresh your authentication.
+</Note>
+
+## User database schema
+
+User accounts are stored with the following structure:
+
+```prisma
+model Users {
+  userId    Int       @id @default(autoincrement())
+  username  String    @unique @db.VarChar(255)
+  email     String    @unique @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  balance   Decimal?  @default(0.00) @db.Decimal(10, 2)
+  createdAt DateTime? @default(now()) @db.Timestamp(6)
+  lastLogin DateTime? @db.Timestamptz(6)
+  country   String?   @db.VarChar(50)
+  userType  String?   @default("regular") @db.VarChar(10)
+  Bets      Bets[]
+}
+```
+
+Key features:
+- **Unique constraints** on username and email
+- **Hashed passwords** for security
+- **Default user type** is "regular"
+- **Timestamps** for account creation and last login
+
+## Password security
+
+Passwords are hashed using bcrypt:
+
+```typescript
+import bcrypt from 'bcrypt';
+
+// During login verification
+const isPasswordValid = await bcrypt.compare(password, users.password);
+```
+
+This ensures passwords are never stored in plain text and are securely verified during authentication.
+
+## Authentication states
+
+<CardGroup cols={2}>
+  <Card title="Unauthenticated" icon="lock">
+    - No token in localStorage
+    - Limited to viewing public data
+    - No admin controls visible
+    - Can register or log in
+  </Card>
+  <Card title="Authenticated" icon="lock-open">
+    - Valid token in localStorage
+    - Full data access
+    - Admin controls visible (if admin role)
+    - Can perform role-appropriate actions
+  </Card>
+</CardGroup>
+
+## Session management
+
+The application reloads after successful login to update the UI:
+
+```typescript
+if (responseBody.message === 'Login successful') {
+  alert(`Login successful. Welcome, ${username.value}!`);
+  window.location.reload();
+}
+```
+
+This ensures:
+- Authentication state is reflected across all components
+- Admin controls appear for authorized users
+- UI adapts to user permissions
+
+## Security best practices
+
+<Note>
+For production deployment, ensure you:
+- Use environment variables for JWT secret keys
+- Implement HTTPS for all authentication endpoints
+- Add rate limiting to prevent brute force attacks
+- Implement password strength requirements
+- Consider adding two-factor authentication
+- Use secure, httpOnly cookies instead of localStorage for tokens
+</Note>

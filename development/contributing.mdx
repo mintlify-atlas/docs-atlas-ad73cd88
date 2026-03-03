@@ -1,0 +1,303 @@
+---
+title: Contributing guidelines
+description: Learn how to contribute to F1 PitLane Predict with our development workflow and best practices
+---
+
+## Getting started
+
+Thank you for your interest in contributing to F1 PitLane Predict! This guide will help you set up your development environment and understand our workflow.
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js 20 (LTS) or higher** - [Download here](https://nodejs.org/)
+- **npm** - Comes with Node.js
+- **Git** - For version control
+- **PostgreSQL** - For the database
+- **Prisma CLI** - Installed via npm
+
+### Initial setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/P4ND4P0W3R/f1-pit-lane-predict.git
+    cd f1-pit-lane-predict
+    ```
+  </Step>
+
+  <Step title="Install frontend dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Install backend dependencies">
+    ```bash
+    cd server
+    npm install
+    cd ..
+    ```
+  </Step>
+
+  <Step title="Set up the database">
+    Configure your PostgreSQL connection in a `.env` file:
+    
+    ```bash
+    DATABASE_URL="postgresql://username:password@localhost:5432/f1_pitlane"
+    ```
+
+    Run Prisma migrations:
+    
+    ```bash
+    npx prisma migrate dev
+    npx prisma generate
+    ```
+  </Step>
+
+  <Step title="Start development servers">
+    Open two terminal windows:
+
+    **Terminal 1 - Frontend:**
+    ```bash
+    npm run dev
+    ```
+    
+    **Terminal 2 - Backend:**
+    ```bash
+    cd server
+    npm run dev
+    ```
+  </Step>
+</Steps>
+
+Your application should now be running:
+- Frontend: `http://localhost:5173`
+- Backend: Check terminal output for port
+
+## Development workflow
+
+### Branching strategy
+
+We follow a simple Git workflow:
+
+1. **Create a feature branch** from `main`:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes** in the feature branch
+
+3. **Commit frequently** with clear messages
+
+4. **Push your branch** and create a pull request
+
+<Note>
+Use descriptive branch names like `feature/add-betting-system`, `fix/driver-update-bug`, or `docs/update-readme`.
+</Note>
+
+### Code organization
+
+#### Frontend components
+
+When creating new Vue components:
+
+- Place reusable components in `src/components/`
+- Place page-level components in `src/views/`
+- Use PascalCase for component names: `DriverCard.vue`, `RaceResults.vue`
+- Keep components focused on a single responsibility
+
+#### Backend endpoints
+
+When adding new API endpoints:
+
+- Group related endpoints in directories: `api/resource-name/`
+- Follow naming conventions:
+  - `index.ts` - GET all or single item
+  - `create.ts` - POST new item
+  - `update.ts` - PUT/PATCH existing item
+  - `delete.ts` - DELETE item
+- Use Nitro's `defineEventHandler()` for all endpoints
+
+#### Database changes
+
+When modifying the database schema:
+
+1. Edit `prisma/schema.prisma`
+2. Create a migration: `npx prisma migrate dev --name description-of-change`
+3. Regenerate Prisma client: `npx prisma generate`
+4. Test the migration thoroughly
+
+<Warning>
+Never modify migration files after they've been committed. Always create new migrations for schema changes.
+</Warning>
+
+## Code style
+
+### TypeScript
+
+- Use TypeScript for all new code (`.ts` and `.vue` files)
+- Avoid using `any` type - use specific types or generics
+- Define interfaces for data structures
+- Leverage Prisma-generated types for database models
+
+### Vue.js conventions
+
+- Use Composition API for new components
+- Prefer `<script setup>` syntax
+- Use TypeScript with `<script setup lang="ts">`
+- Keep template logic simple - move complex logic to composables
+
+Example component structure:
+```vue
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import type { Driver } from '@prisma/client'
+
+const drivers = ref<Driver[]>([])
+
+onMounted(async () => {
+  // Fetch drivers
+})
+</script>
+
+<template>
+  <div class="driver-list">
+    <!-- Template content -->
+  </div>
+</template>
+
+<style scoped>
+/* Component styles */
+</style>
+```
+
+### Naming conventions
+
+- **Variables and functions**: camelCase (`getUserData`, `driverList`)
+- **Components**: PascalCase (`DriverCard`, `RaceTable`)
+- **Files**: Match component names (`DriverCard.vue`) or use kebab-case for utilities
+- **CSS classes**: kebab-case (`driver-card`, `race-table`)
+
+## Testing your changes
+
+### Frontend testing
+
+1. **Type check** your code:
+   ```bash
+   npm run type-check
+   ```
+
+2. **Build** the frontend to catch build errors:
+   ```bash
+   npm run build
+   ```
+
+3. **Manual testing** in the browser at `http://localhost:5173`
+
+### Backend testing
+
+1. **Test API endpoints** using:
+   - Browser for GET requests
+   - Postman, Insomnia, or curl for other methods
+   - Browser DevTools Network tab
+
+2. **Verify database changes** using Prisma Studio:
+   ```bash
+   npx prisma studio
+   ```
+
+### Integration testing
+
+Test the full stack:
+
+1. Start both frontend and backend servers
+2. Test user flows from the UI
+3. Verify data persistence in the database
+4. Check browser console for errors
+5. Monitor backend terminal for errors
+
+## Pull request process
+
+When you're ready to contribute your changes:
+
+<Steps>
+  <Step title="Prepare your changes">
+    - Ensure all changes are committed
+    - Run type checking: `npm run type-check`
+    - Test thoroughly in development
+    - Update documentation if needed
+  </Step>
+
+  <Step title="Push your branch">
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+  </Step>
+
+  <Step title="Create a pull request">
+    - Go to the repository on GitHub
+    - Click "New Pull Request"
+    - Select your feature branch
+    - Fill out the PR template with:
+      - Clear description of changes
+      - Why the change is needed
+      - How to test the changes
+      - Screenshots (if UI changes)
+  </Step>
+
+  <Step title="Code review">
+    - Address reviewer feedback
+    - Make requested changes
+    - Push updates to the same branch
+    - Respond to comments
+  </Step>
+
+  <Step title="Merge">
+    Once approved, a maintainer will merge your PR into `main`.
+  </Step>
+</Steps>
+
+## IDE setup
+
+### Recommended: Visual Studio Code
+
+Install these extensions for the best development experience:
+
+- **Volar** - Vue.js language support (disable Vetur if installed)
+- **TypeScript Vue Plugin (Volar)** - TypeScript support in `.vue` files
+- **Prisma** - Syntax highlighting for `.prisma` files
+- **ESLint** - Code linting (if configured)
+- **GitLens** - Enhanced Git integration
+
+<Note>
+The Volar extension replaces the older Vetur extension. Make sure to disable Vetur if you have it installed to avoid conflicts.
+</Note>
+
+### Editor configuration
+
+VSCode settings for this project:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}
+```
+
+## Getting help
+
+If you need assistance:
+
+- Check existing [GitHub Issues](https://github.com/P4ND4P0W3R/f1-pit-lane-predict/issues)
+- Review the [documentation](/introduction)
+- Create a new issue with the "question" label
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.
