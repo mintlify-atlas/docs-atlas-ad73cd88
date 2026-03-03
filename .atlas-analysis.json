@@ -1,0 +1,123 @@
+{
+  "projectType": "saas",
+  "projectName": "F1 PitLane Predict",
+  "projectDescription": "A web application for tracking F1 2023 Championship results, managing drivers, teams, and races with user authentication.",
+  "theme": "aspen",
+  "primaryColor": "#e10600",
+  "lightColor": "#ff1e00",
+  "darkColor": "#a50000",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/drivers",
+              "features/teams",
+              "features/races",
+              "features/results",
+              "features/authentication"
+            ]
+          },
+          {
+            "group": "Database",
+            "pages": [
+              "database/schema",
+              "database/setup"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/architecture",
+              "development/contributing",
+              "development/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/register",
+              "api/auth/login"
+            ]
+          },
+          {
+            "group": "Drivers",
+            "pages": [
+              "api/drivers/list",
+              "api/drivers/create",
+              "api/drivers/update",
+              "api/drivers/delete"
+            ]
+          },
+          {
+            "group": "Teams",
+            "pages": [
+              "api/teams/list",
+              "api/teams/create",
+              "api/teams/update",
+              "api/teams/delete"
+            ]
+          },
+          {
+            "group": "Races",
+            "pages": [
+              "api/races/list",
+              "api/races/create",
+              "api/races/update",
+              "api/races/delete"
+            ]
+          },
+          {
+            "group": "Results",
+            "pages": [
+              "api/results/list"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Driver standings tracking with points calculation",
+    "Constructor championship standings",
+    "Race schedule and results management",
+    "User authentication and registration",
+    "CRUD operations for drivers, teams, and races",
+    "Database-driven architecture with Prisma ORM",
+    "Vue.js reactive frontend interface",
+    "RESTful API with Nitro.js backend"
+  ],
+  "publicApiSurface": [
+    "GET /api/drivers - List all drivers with standings",
+    "POST /api/drivers/create - Create new driver",
+    "PUT /api/drivers/update - Update driver information",
+    "DELETE /api/drivers/delete - Delete driver",
+    "GET /api/teams - List all teams with points",
+    "POST /api/teams/create - Create new team",
+    "PUT /api/teams/update - Update team information",
+    "DELETE /api/teams/delete - Delete team",
+    "GET /api/races - List all races",
+    "POST /api/races/create - Create new race",
+    "PUT /api/races/update - Update race information",
+    "DELETE /api/races/delete - Delete race",
+    "GET /api/results - Get race results",
+    "POST /api/user/register - Register new user",
+    "POST /api/user/login - User login"
+  ]
+}
